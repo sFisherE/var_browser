@@ -1,16 +1,13 @@
-﻿using System.Text.RegularExpressions;
-using System.Reflection;
+﻿using BepInEx;
+using HarmonyLib;
+using ICSharpCode.SharpZipLib.Zip;
+using Prime31.MessageKit;
 using System;
 using System.IO;
-using System.Collections.Generic;
-using BepInEx;
+using System.Reflection;
 using UnityEngine;
-using HarmonyLib;
-using Prime31.MessageKit;
-using UnityEngine.UI;
 using UnityEngine.SceneManagement;
-using ICSharpCode.SharpZipLib.Core;
-using ICSharpCode.SharpZipLib.Zip;
+using UnityEngine.UI;
 namespace var_browser
 {
     //插件描述特性 分别为 插件ID 插件名字 插件版本(必须为数字)
@@ -52,7 +49,7 @@ namespace var_browser
         {
             //this.gameObject.name = "var_browser";
             var go = new GameObject("var_browser_messager");
-           var messager = go.AddComponent<Messager>();
+            var messager = go.AddComponent<Messager>();
             messager.target = this.gameObject;
 
             SceneManager.sceneLoaded -= OnSceneLoaded;
@@ -75,18 +72,23 @@ namespace var_browser
 
             this.Config.Save();
         }
+        //硬重启会进来
         void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
-            m_Inited = false;
-            m_FileManagerInited = false;
-            m_UIInited = false;
+            LogUtil.LogWarning("OnSceneLoaded " + scene.name + " " + mode.ToString());
+            if (mode == LoadSceneMode.Single)
+            {
+                m_Inited = false;
+                m_FileManagerInited = false;
+                m_UIInited = false;
+            }
         }
         void OnEnable()
         {
             MessageKit<string>.addObserver(MessageDef.UpdateLoading, OnPrograss);
             MessageKit.addObserver(MessageDef.DeactivateWorldUI, OnDeactivateWorldUI);
             MessageKit.addObserver(MessageDef.FileManagerInit, OnFileManagerInit);
-            
+
         }
         void OnDisable()
         {
@@ -106,7 +108,7 @@ namespace var_browser
         }
         void OnDeactivateWorldUI()
         {
-            if(m_FileBrowser!=null)
+            if (m_FileBrowser != null)
             {
                 m_FileBrowser.Hide();
             }
@@ -147,7 +149,7 @@ namespace var_browser
             }
             if (!m_UIInited)
             {
-                if (MVR.Hub.HubBrowse.singleton != null&&m_FileManagerInited)
+                if (MVR.Hub.HubBrowse.singleton != null && m_FileManagerInited)
                 {
                     CreateHubBrowse();
                     CreateFileBrowser();
@@ -169,7 +171,7 @@ namespace var_browser
                 var pkg = FileManager.GetPackage(item);
                 if (pkg != null)
                 {
-                    bool dirty= pkg.InstallSelf();
+                    bool dirty = pkg.InstallSelf();
                     if (dirty) flag = true;
                 }
             }
@@ -322,7 +324,7 @@ namespace var_browser
                 if (MiniMode)
                 {
                     m_UIScale = 1;
-                    MiniMode= false;
+                    MiniMode = false;
                     //m_Rect.height = 450;
                 }
                 else
@@ -332,7 +334,7 @@ namespace var_browser
                 Settings.Instance.UIScale.Value = m_UIScale;
                 RestrcitUIRect();
             }
-            if (GUILayout.Button("-",GUILayout.Width(20)))
+            if (GUILayout.Button("-", GUILayout.Width(20)))
             {
                 m_UIScale -= 0.2f;
                 if (m_UIScale < 1)
@@ -341,7 +343,7 @@ namespace var_browser
                     m_Rect.height = 50;
                 }
                 m_UIScale = Mathf.Max(m_UIScale, 1);
-                
+
                 Settings.Instance.UIScale.Value = m_UIScale;
             }
             GUILayout.EndHorizontal();
@@ -363,8 +365,7 @@ namespace var_browser
                 return;
             }
 
-            GUILayout.Label(string.Format("Show/Hide:{0}",UIKey.keyPattern));
-            GUILayout.Label(string.Format("{0}:{1}", m_FileManagerInited, m_UIInited));
+            GUILayout.Label(string.Format("Show/Hide:{0}", UIKey.keyPattern));
 
             if (m_FileManagerInited && m_UIInited)
             {
@@ -418,7 +419,7 @@ namespace var_browser
                 GUI.enabled = true;
 
                 GUILayout.Label("Custom");
-                if (GUILayout.Button(string.Format("Scene({0})",CustomSceneKey.keyPattern, GUILayout.MaxWidth(150))))
+                if (GUILayout.Button(string.Format("Scene({0})", CustomSceneKey.keyPattern, GUILayout.MaxWidth(150))))
                 {
                     OpenCustomScene();
                 }
@@ -431,7 +432,7 @@ namespace var_browser
                     OpenPersonPreset();
                 }
                 GUILayout.Label("Category");
-                if (GUILayout.Button(string.Format("Scene({0})",CategorySceneKey.keyPattern,GUILayout.MaxWidth(150))))
+                if (GUILayout.Button(string.Format("Scene({0})", CategorySceneKey.keyPattern, GUILayout.MaxWidth(150))))
                 {
                     OpenCategoryScene();
                 }
@@ -492,7 +493,7 @@ namespace var_browser
                 }
             }
         }
-        void ShowFileBrowser(string title,string fileFormat,string path,bool inGame=false,bool selectOnClick=true)
+        void ShowFileBrowser(string title, string fileFormat, string path, bool inGame = false, bool selectOnClick = true)
         {
             SuperController.singleton.ActivateWorldUI();
             //隐藏hub browse
@@ -503,21 +504,21 @@ namespace var_browser
             m_FileBrowser.SetTextEntry(false);
             m_FileBrowser.keepOpen = true;
             m_FileBrowser.hideExtension = true;
-            m_FileBrowser.SetTitle("<color=green>"+title+ "</color>");
+            m_FileBrowser.SetTitle("<color=green>" + title + "</color>");
             m_FileBrowser.selectOnClick = selectOnClick;
 
-            m_FileBrowser.Show(fileFormat,path,LoadFromSceneWorldDialog, true, inGame);
+            m_FileBrowser.Show(fileFormat, path, LoadFromSceneWorldDialog, true, inGame);
 
             //刷新一下favorite和autoinstall的状态
             MessageKit.post(MessageDef.FileManagerRefresh);
         }
         void OnGUI()
         {
-            if (!m_Show) 
+            if (!m_Show)
                 return;
             var pre = GUI.matrix;
             GUI.matrix = Matrix4x4.TRS(new Vector3(0, 0, 0), Quaternion.identity, new Vector3(m_UIScale, m_UIScale, 1));
-            
+
             if (m_Inited)
             {
                 //if (m_IsMin)
@@ -531,7 +532,7 @@ namespace var_browser
                 {
                     show = false;
                 }
-                if(show)
+                if (show)
                 {
                     RestrcitUIRect();
                     m_Rect = GUILayout.Window(0, m_Rect, DragWnd, "dragable area");
@@ -587,8 +588,8 @@ namespace var_browser
         public void InitDynamicPrefab()
         {
             m_MVRPluginManager = SuperController.singleton.transform.Find("ScenePluginManager").GetComponent<MVRPluginManager>();
-       //m_MVRPluginManager.configurableFilterablePopupPrefab
-        
+            //m_MVRPluginManager.configurableFilterablePopupPrefab
+
         }
     }
 }

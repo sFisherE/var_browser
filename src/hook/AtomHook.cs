@@ -168,7 +168,7 @@ namespace var_browser
         //[HarmonyPrefix]
         //[HarmonyPatch(typeof(MeshVR.PresetManager), "LoadPresetPre",
         //    new Type[] { typeof(bool) })]
-        //public static void PreLoadPresetPre(MeshVR.PresetManager __instance,bool isMerge = false)
+        //public static void PreLoadPresetPre(MeshVR.PresetManager __instance, bool isMerge = false)
         //{
         //    if (__instance.itemType != MeshVR.PresetManager.ItemType.None)
         //    {
@@ -196,7 +196,7 @@ namespace var_browser
         //            }
         //            else
         //            {
-        //                LogUtil.LogError("PresetManager PreLoadPresetPre " + text+" no exists");
+        //                LogUtil.LogError("PresetManager PreLoadPresetPre " + text + " no exists");
         //            }
 
         //        }
@@ -206,12 +206,12 @@ namespace var_browser
         [HarmonyPrefix]
         [HarmonyPatch(typeof(MeshVR.PresetManager), "LoadPresetPreFromJSON",
             new Type[] { typeof(JSONClass), typeof(bool) })]
-        protected void PreLoadPresetPreFromJSON(MeshVR.PresetManager __instance,
+        protected static void PreLoadPresetPreFromJSON(MeshVR.PresetManager __instance,
             JSONClass inputJSON,
             bool isMerge = false)
         {
             string str = inputJSON.ToString();
-            Debug.Log("PresetManager PreLoadPresetPreFromJSON " + __instance.presetName);
+            Debug.LogWarning("PresetManager PreLoadPresetPreFromJSON " + __instance.presetName);
             FileButton.EnsureInstalledInternal(str);
         }
 

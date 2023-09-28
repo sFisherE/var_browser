@@ -323,9 +323,13 @@ namespace var_browser
 
 		public static void Refresh(bool init = false,bool clean=false,bool removeOldVersion=false)
 		{
-			//if (debug)
-			{
-				LogUtil.Log("FileManager Refresh()");
+#if DEBUG
+			string stackTrace = new System.Diagnostics.StackTrace().ToString();
+			LogUtil.LogWarning("Refresh " + stackTrace);
+#endif
+            //if (debug)
+            {
+                LogUtil.LogWarning(string.Format("FileManager Refresh({0},{1},{2})",init,clean,removeOldVersion));
 			}
 			if (packagesByUid == null)
 			{
@@ -467,9 +471,9 @@ namespace var_browser
 					//}
 				}
                 if (init)
-                    FileManager.singleton.StartScan(flag, clean, true);
+                    FileManager.singleton.StartScan(init,flag, clean, true);
                 else
-                    FileManager.singleton.StartScan(flag, clean, false);
+                    FileManager.singleton.StartScan(init,flag, clean, false);
 
             }
             catch (Exception arg)
@@ -521,7 +525,7 @@ namespace var_browser
 			}
 		}
 		Coroutine m_StartScanCo = null;
-		IEnumerator StartScanCo(bool flag, bool clean, bool runCo)
+		IEnumerator StartScanCo(bool init,bool flag, bool clean, bool runCo)
         {
 			List<VarPackage> invalid = new List<VarPackage>();
 			if (runCo)
@@ -556,21 +560,28 @@ namespace var_browser
 					RemoveToInvalid(path, "InvalidZip");
 				}
 			}
-			if (flag && onRefreshHandlers != null)
-			{
-				onRefreshHandlers();
-			}
-			//不管有没有变化都刷新一下，因为可能文件没有移动，只是favorite或者autoinstall状态变了
-			MessageKit.post(MessageDef.FileManagerRefresh);
+            if (init)
+            {
+				//init的时候，必须要刷新
+                if (onRefreshHandlers != null)
+                    onRefreshHandlers();
+            }
+            else
+            {
+                if (flag && onRefreshHandlers != null)
+                    onRefreshHandlers();
+            }
+            //不管有没有变化都刷新一下，因为可能文件没有移动，只是favorite或者autoinstall状态变了
+            MessageKit.post(MessageDef.FileManagerRefresh);
 		}
-		public void StartScan(bool flag,bool clean,bool runCo)
+		public void StartScan(bool init,bool flag,bool clean,bool runCo)
 		{
 			if (m_StartScanCo != null)
 			{
 				StopCoroutine(m_StartScanCo);
 				m_StartScanCo = null;
 			}
-			m_StartScanCo = StartCoroutine(StartScanCo(flag, clean, runCo));
+			m_StartScanCo = StartCoroutine(StartScanCo(init,flag, clean, runCo));
    //         if (runCo)
    //         {
 			//	if (m_Co != null)

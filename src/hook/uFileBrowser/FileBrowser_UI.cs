@@ -238,6 +238,27 @@ namespace var_browser
 			text.fontStyle = FontStyle.Bold;
 			text.color = color;
 		}
+		UIDynamicSlider CreateRightSlider(JSONStorableFloat jsf,int yOffset)
+		{
+			UIDynamicSlider uIDynamicSlider = null;
+			var manager = SuperController.singleton.transform.Find("ScenePluginManager").GetComponent<MVRPluginManager>();
+			if (manager != null && manager.configurableSliderPrefab != null)
+			{
+				Transform transform = CreateRightUIElement(manager.configurableSliderPrefab.transform, yOffset);
+				if (transform != null)
+				{
+					RectTransform rectTransform = transform.GetComponent<RectTransform>();
+					rectTransform.sizeDelta = new Vector2(300, 100);
+					uIDynamicSlider = transform.GetComponent<UIDynamicSlider>();
+					if (uIDynamicSlider != null)
+					{
+						uIDynamicSlider.Configure(jsf.name, jsf.min, jsf.max, jsf.val, jsf.constrained, "F2", showQuickButtons: false, !jsf.constrained);
+						jsf.slider = uIDynamicSlider.slider;
+					}
+				}
+			}
+			return uIDynamicSlider;
+		}
 		void CreateLeftHeader(string v, int yOffset, Color color)
 		{
 			var header = CreateLeftSpacer(yOffset);

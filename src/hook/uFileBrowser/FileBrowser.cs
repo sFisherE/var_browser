@@ -20,6 +20,9 @@ namespace var_browser
 			this.sortByPopup = ui.sortByPopup;
 			this.overlay = ui.overlay;
 			this.window = ui.window;
+			var rt= this.GetComponent<RectTransform>();
+			rt.anchoredPosition = new Vector2(100,0);
+
 			this.fileButtonPrefab = ui.fileButtonPrefab;
 			this.titleText = ui.titleText;
 			this.fileContent = ui.fileContent;
@@ -2664,63 +2667,70 @@ namespace var_browser
 				uIPopup2.onValueChangeHandlers = SetDirectoryOption;// (UIPopup.OnValueChange)Delegate.Combine(uIPopup2.onValueChangeHandlers, new UIPopup.OnValueChange(SetDirectoryOption));
 			}
 
+			//JSONStorableFloat jsf = new JSONStorableFloat("UI Scale", 1, 0.9f, 1f, true, true);
+			//CreateRightSlider(jsf, 0-10);
+			//jsf.setCallbackFunction = val =>
+			//{
+			//	var rt = this.window.GetComponent<RectTransform>();
+			//	rt.localScale = new Vector3(val,val,val);
+			//};
 
-
-			CreateRightHeader("Custom", 0-10, Color.black);
-			CreateRightButton("Scene", -50).button.onClick.AddListener(() =>
+			int offset = 0;
+			CreateRightHeader("Custom", 0-10+ offset, Color.black);
+			CreateRightButton("Scene", -50 + offset).button.onClick.AddListener(() =>
 			{
 				VamHookPlugin.singleton.OpenCustomScene();
 			});
 
-			CreateRightButton("Saved Person", -100).button.onClick.AddListener(() =>
+			CreateRightButton("Saved Person", -100 + offset).button.onClick.AddListener(() =>
 			{
 				VamHookPlugin.singleton.OpenCustomSavedPerson();
 			});
-			CreateRightButton("Person Preset", -150).button.onClick.AddListener(() =>
+			CreateRightButton("Person Preset", -150 + offset).button.onClick.AddListener(() =>
 			{
 				VamHookPlugin.singleton.OpenPersonPreset();
 			});
-			CreateRightHeader("Category", -200 - 10, Color.black);
-			CreateRightButton("Scene", -250).button.onClick.AddListener(() =>
+			CreateRightHeader("Category", -200 - 10 + offset, Color.black);
+			CreateRightButton("Scene", -250 + offset).button.onClick.AddListener(() =>
 			{
 				VamHookPlugin.singleton.OpenCategoryScene();
 			});
-			CreateRightButton("Clothing", -300).button.onClick.AddListener(() =>
+			CreateRightButton("Clothing", -300 + offset).button.onClick.AddListener(() =>
 			{
 				VamHookPlugin.singleton.OpenCategoryClothing();
 			});
-			CreateRightButton("Hair", -350).button.onClick.AddListener(() =>
+			CreateRightButton("Hair", -350 + offset).button.onClick.AddListener(() =>
 			{
 				VamHookPlugin.singleton.OpenCategoryHair();
 			});
-			CreateRightButton("Pose", -400).button.onClick.AddListener(() =>
+			CreateRightButton("Pose", -400 + offset).button.onClick.AddListener(() =>
 			{
 				VamHookPlugin.singleton.OpenCategoryPose();
 			});
 
-			CreateRightHeader("Preset", -450 - 10, Color.black);
-			CreateRightButton("Person", -500).button.onClick.AddListener(() =>
+			CreateRightHeader("Preset", -450 - 10 + offset, Color.black);
+			CreateRightButton("Person", -500 + offset).button.onClick.AddListener(() =>
 			{
 				VamHookPlugin.singleton.OpenPresetPerson();
 			});
-			CreateRightButton("Clothing", -550).button.onClick.AddListener(() =>
+			CreateRightButton("Clothing", -550 + offset).button.onClick.AddListener(() =>
 			{
 				VamHookPlugin.singleton.OpenPresetClothing();
 			});
-			CreateRightButton("Hair",-600).button.onClick.AddListener(() =>
+			CreateRightButton("Hair",-600 + offset).button.onClick.AddListener(() =>
 			{
 				VamHookPlugin.singleton.OpenPresetHair();
 			});
-			CreateRightButton("Other",-650).button.onClick.AddListener(() =>
+			CreateRightButton("Other",-650 + offset).button.onClick.AddListener(() =>
 			{
 				VamHookPlugin.singleton.OpenPresetOther();
 			});
-			CreateRightHeader("Misc", -700 - 10, Color.black);
-			CreateRightButton("AssetBundle", -750).button.onClick.AddListener(() =>
+			CreateRightHeader("Misc", -700 - 10 + offset, Color.black);
+			CreateRightButton("AssetBundle", -750 + offset).button.onClick.AddListener(() =>
 			{
 				VamHookPlugin.singleton.OpenMiscCUA();
 			});
-			CreateRightButton("All", -800).button.onClick.AddListener(() =>
+			CreateRightButton("All", -800 + offset).button.onClick.AddListener(() =>
 			{
 				VamHookPlugin.singleton.OpenMiscAll();
 			});

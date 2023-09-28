@@ -671,16 +671,26 @@ namespace var_browser
                     while (enumerator2.MoveNext())
                     {
                         JSONClass resource = (JSONClass)enumerator2.Current;
-                        HubResourceItem hubResourceItem = new HubResourceItem(resource, this);
-                        hubResourceItem.Refresh();
-
-                        RectTransform rectTransform = UnityEngine.Object.Instantiate(itemPrefab);
-                        rectTransform.SetParent(itemContainer, false);
-                        HubResourceItemUI component = rectTransform.GetComponent<HubResourceItemUI>();
-                        if (component != null)
+                        bool canShow = true;
+                        bool asBool = resource["hubDownloadable"].AsBool;
+                        if(onlyDownloadable.val)
                         {
-                            hubResourceItem.RegisterUI(component);
-                            items.Add(component);
+                            canShow = asBool;
+                        }
+                        //不能下载的不显示
+                        if (canShow)
+                        {
+                            HubResourceItem hubResourceItem = new HubResourceItem(resource, this);
+                            hubResourceItem.Refresh();
+
+                            RectTransform rectTransform = UnityEngine.Object.Instantiate(itemPrefab);
+                            rectTransform.SetParent(itemContainer, false);
+                            HubResourceItemUI component = rectTransform.GetComponent<HubResourceItemUI>();
+                            if (component != null)
+                            {
+                                hubResourceItem.RegisterUI(component);
+                                items.Add(component);
+                            }
                         }
                     }
                     return;
@@ -725,6 +735,11 @@ namespace var_browser
                 if (_payTypeFilter != "All")
                 {
                     jSONClass["category"] = _payTypeFilter;
+                }
+                //如果勾选了“只有可下载”选项，则payType必然是free，减少返回的数据量
+                if (onlyDownloadable.val)
+                {
+                    jSONClass["category"] = "Free";
                 }
                 if (_categoryFilter != "All")
                 {
@@ -2090,6 +2105,7 @@ namespace var_browser
             openMissingPackagesPanelAction.RegisterButton(componentInChildren.openMissingPackagesPanelButton, isAlt);
             closeMissingPackagesPanelAction.RegisterButton(componentInChildren.closeMissingPackagesPanelButton, isAlt);
             downloadAllMissingPackagesAction.RegisterButton(componentInChildren.downloadAllMissingPackagesButton, isAlt);
+
             openUpdatesPanelAction.RegisterButton(componentInChildren.openUpdatesPanelButton, isAlt);
             closeUpdatesPanelAction.RegisterButton(componentInChildren.closeUpdatesPanelButton, isAlt);
             downloadAllUpdatesAction.RegisterButton(componentInChildren.downloadAllUpdatesButton, isAlt);
@@ -2097,9 +2113,33 @@ namespace var_browser
             downloadQueuedCountJSON.RegisterText(componentInChildren.downloadQueuedCountText, isAlt);
             openDownloadingAction.RegisterButton(componentInChildren.openDownloadingButton, isAlt);
 
-            LogUtil.Log("HubBrowse Init End");
-        }
 
+            var openMissingPackagesPanelButton = componentInChildren.openMissingPackagesPanelButton;
+            var relPos = openMissingPackagesPanelButton.transform.localPosition;
+            Transform parent = openMissingPackagesPanelButton.transform.parent;
+
+            onlyDownloadable = new JSONStorableBool("Only Downloadable", true);
+            var manager = SuperController.singleton.transform.Find("ScenePluginManager").GetComponent<MVRPluginManager>();
+            if (manager != null && manager.configurableTogglePrefab != null)
+            {
+                RectTransform transform = UnityEngine.Object.Instantiate(manager.configurableTogglePrefab, parent) as RectTransform;
+                transform.localPosition = new Vector3(relPos.x, relPos.y+80, relPos.z);
+                transform.gameObject.SetActive(true);
+
+                var uIDynamicToggle = transform.GetComponent<UIDynamicToggle>();
+                if (uIDynamicToggle != null)
+                {
+                    uIDynamicToggle.label = onlyDownloadable.name;
+                    onlyDownloadable.toggle = uIDynamicToggle.toggle;
+
+                    uIDynamicToggle.backgroundImage.color = new Color32(133,255,133,255);
+                }
+            }
+            
+
+                LogUtil.Log("HubBrowse Init End");
+        }
+        JSONStorableBool onlyDownloadable;
         protected void OnLoad(ZenFulcrum.EmbeddedBrowser.JSONNode loadData)
         {
             browser.EvalJS("\r\n\t\t\t\twindow.scrollTo(0,0);\r\n\t\t\t");

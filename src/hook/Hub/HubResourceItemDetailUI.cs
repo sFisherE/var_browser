@@ -7,6 +7,8 @@ namespace var_browser
     {
         public void Init(MVR.Hub.HubResourceItemDetailUI ui)
         {
+            this.Init(ui as MVR.Hub.HubResourceItemUI);
+
             this.closeDetailButton = ui.closeDetailButton;
             this.closeDetailButtonAlt = ui.closeDetailButtonAlt;
             this.hadErrorIndicator = ui.hadErrorIndicator;
