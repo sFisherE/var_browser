@@ -117,7 +117,7 @@ namespace var_browser
                 m_HubBrowse.Hide();
             }
         }
-        bool m_Show = true;
+        static bool m_Show = true;//liu修改 改成静态外部消息方法调用
         void Update()
         {
             if (UIKey.TestKeyDown())
