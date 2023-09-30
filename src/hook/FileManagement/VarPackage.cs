@@ -570,6 +570,20 @@ namespace var_browser
 									{
 										VarFileEntry varFileEntry = new VarFileEntry(this, zipEntry.Name, zipEntry.DateTime, zipEntry.Size);
 										FileEntries.Add(varFileEntry);
+										//liu修改  增加资产预览图片
+										string entry = entryName.Substring(0, entryName.Length - 12) + ".jpg";
+										//SuperController.LogMessage("assetbundle:"+ entry);
+										if (!set.Contains(entry))
+										{
+											ZipEntry jpgEntry = zipFile.GetEntry(entry);
+											if (jpgEntry != null)
+											{
+
+												VarFileEntry varFileEntry2 = new VarFileEntry(this, jpgEntry.Name, jpgEntry.DateTime, jpgEntry.Size);
+												FileEntries.Add(varFileEntry2);
+												set.Add(entry);
+											}
+										}
 									}
 								}
 							}
