@@ -223,6 +223,7 @@ namespace var_browser
 				if (varFileEntry != null)
 				{
 					LastWriteTimePackage = varFileEntry.Package.LastWriteTime;
+					LastWriteTime = varFileEntry.Package.CreationTime;
 				}
 				else
 				{

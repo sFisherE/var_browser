@@ -196,6 +196,11 @@ namespace var_browser
 			get;
 			protected set;
 		}
+		public DateTime CreationTime
+		{
+			get;
+			protected set;
+		}
 
 		public long Size
 		{
@@ -430,8 +435,10 @@ namespace var_browser
 				ZipFile zipFile = null;
                 try
                 {
-					FileInfo fileInfo = new FileInfo(Path);
-					LastWriteTime = fileInfo.LastWriteTime;
+                    FileInfo fileInfo = new FileInfo(Path);
+                    LastWriteTime = fileInfo.LastWriteTime;
+					//new to old的排序按文件创建时间来排序
+					CreationTime = fileInfo.CreationTime;
 					Size = fileInfo.Length;
 
 					metaEntry = null;
