@@ -62,6 +62,11 @@ namespace var_browser
         protected static void PreSyncPresetBrowsePath(MeshVR.PresetManagerControl __instance, string url)
         {
             LogUtil.Log("[var browser hook]PreSyncPresetBrowsePath " + url);
+            //如果预设是plugin类型的，则不处理。
+            //timeline这种vap文件往往很大
+            if (url.Contains("/Plugins/"))
+                return;
+
             VarFileEntry varFileEntry = FileManager.GetVarFileEntry(url);
             if (varFileEntry != null)
             {
@@ -210,8 +215,26 @@ namespace var_browser
             JSONClass inputJSON,
             bool isMerge = false)
         {
+            if (inputJSON["storables"] != null)
+            {
+                JSONArray array = inputJSON["storables"] as JSONArray;
+                for(int i = 0; i < array.Count; i++)
+                {
+                    var node = array[i]["id"];
+                    if (node != null)
+                    {
+                        //如果是插件预设，则不处理
+                        if (node.Value == "PluginManager")
+                        {
+                            LogUtil.LogWarning("[var browser hook]PresetManager PreLoadPresetPreFromJSON break:" + __instance.presetName);
+                            return;
+                        }
+                    }
+                }
+            }
+
             string str = inputJSON.ToString();
-            Debug.LogWarning("PresetManager PreLoadPresetPreFromJSON " + __instance.presetName);
+            LogUtil.Log("[var browser hook]PresetManager PreLoadPresetPreFromJSON " + __instance.presetName);
             FileButton.EnsureInstalledInternal(str);
         }
 
