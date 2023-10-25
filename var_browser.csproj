@@ -271,6 +271,7 @@
     <Compile Include="src\hook\uFileBrowser\FileButton.cs" />
     <Compile Include="src\hook\uFileBrowser\FileIcon.cs" />
     <Compile Include="src\hook\uFileBrowser\ShortCutButton.cs" />
+    <Compile Include="src\hook\VarNameParser.cs" />
     <Compile Include="src\KeyUtil.cs" />
     <Compile Include="src\LogUtil.cs" />
     <Compile Include="src\MessageDef.cs" />
@@ -313,6 +314,6 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy $(TargetPath) H:\vam\BepInEx\plugins</PostBuildEvent>
+    <PostBuildEvent>copy $(TargetPath) f:\vam\BepInEx\plugins</PostBuildEvent>
   </PropertyGroup>
 </Project>

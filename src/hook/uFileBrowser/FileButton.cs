@@ -229,14 +229,18 @@ namespace var_browser
         }
         public static bool EnsureInstalledByText(string text)
         {
-            Regex varInVapRegex = new Regex(@"""([^\\\/\:\*\?\""\<\>\.]+)\.([^\\\/\:\*\?\""\<\>\.]+)\.(\w+):");
-            var ms = varInVapRegex.Matches(text);
-            HashSet<string> set = new HashSet<string>();
+            //Regex varInVapRegex = new Regex(@"""([^\\\/\:\*\?\""\<\>\.]+)\.([^\\\/\:\*\?\""\<\>\.]+)\.(\w+):");
+            //var ms = varInVapRegex.Matches(text);
+            //HashSet<string> set = new HashSet<string>();
 
-            foreach (Match item in ms)
-            {
-                set.Add(string.Format("{0}.{1}.{2}", item.Groups[1], item.Groups[2], item.Groups[3]));
-            }
+            //foreach (Match item in ms)
+            //{
+            //    set.Add(string.Format("{0}.{1}.{2}", item.Groups[1], item.Groups[2], item.Groups[3]));
+            //}
+            var set= VarNameParser.Parse(text);
+            if (set == null)
+                return false;
+
             bool flag = false;
             foreach (var key in set)
             {
