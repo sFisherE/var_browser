@@ -481,7 +481,17 @@ namespace var_browser
 				LogUtil.LogError("Exception during package refresh " + arg);
 			}
 			lastPackageRefreshTime = DateTime.Now;
+
+			s_InstalledCount = 0;
+			foreach (var item in packagesByUid)
+			{
+                if (item.Value.IsInstalled())
+                {
+					s_InstalledCount++;
+				}
+			}
 		}
+		public static int s_InstalledCount=0;
 
 		static void ScanAndRegister(VarPackage varPackage)
 		{
@@ -582,43 +592,6 @@ namespace var_browser
 				m_StartScanCo = null;
 			}
 			m_StartScanCo = StartCoroutine(StartScanCo(init,flag, clean, runCo));
-   //         if (runCo)
-   //         {
-			//	if (m_Co != null)
-			//	{
-			//		StopCoroutine(m_Co);
-			//		m_Co = null;
-			//	}
-			//	m_Co = StartCoroutine(ScanVarPackage(clean));
-			//}
-   //         else
-   //         {
-			//	List<VarPackage> invalid = new List<VarPackage>();
-
-			//	foreach (var item in packagesByUid)
-			//	{
-			//		ScanAndRegister(item.Value);
-			//		if (item.Value.invalid)
-			//		{
-			//			invalid.Add(item.Value);
-			//		}
-			//	}
-   //             if (clean)
-   //             {
-			//		foreach (var item in invalid)
-			//		{
-			//			string path = item.Path;
-			//			UnregisterPackage(item);
-			//			RemoveToInvalid(path, "CorruptedZip");
-			//		}
-			//	}
-			//	if (flag && onRefreshHandlers != null)
-			//	{
-			//		onRefreshHandlers();
-			//	}
-			//	//不管有没有变化都刷新一下，因为可能文件没有移动，只是favorite或者autoinstall状态变了
-			//	MessageKit.post(MessageDef.FileManagerRefresh);
-			//}
 		}
 		Coroutine m_Co = null;
 		IEnumerator ScanVarPackage(bool clean, List<VarPackage> invalid)
@@ -658,21 +631,6 @@ namespace var_browser
 
 				cnt++;
 			}
-   //         if (clean)
-   //         {
-			//	foreach (var item in invalid)
-			//	{
-			//		string path = item.Path;
-			//		UnregisterPackage(item);
-			//		RemoveToInvalid(path, "CorruptedZip");
-			//	}
-			//}
-
-   //         if (onRefreshHandlers != null)
-   //         {
-   //             onRefreshHandlers();
-   //         }
-			//	MessageKit.post(MessageDef.FileManagerInit);
 		}
 
 		public List<string> GetAllVars()

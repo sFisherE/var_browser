@@ -160,6 +160,11 @@ namespace var_browser
 			get;
 			protected set;
 		}
+		public bool IsInstalled()
+        {
+			return Path.StartsWith("AddonPackages/");
+		}
+
 		public string RelativePath;
 		public VarPackageGroup Group
 		{

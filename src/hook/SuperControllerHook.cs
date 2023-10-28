@@ -38,7 +38,16 @@ namespace var_browser
             }
         }
 
-
-
+        /// <summary>
+        /// 始终设置Allow Always
+        /// </summary>
+        /// <param name="__instance"></param>
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(MVR.FileManagement.VarPackage), "LoadUserPrefs")]
+        public static void PostLoadUserPrefs(MVR.FileManagement.VarPackage __instance)
+        {
+            if(Settings.Instance.PluginsAlwaysEnabled.Value)
+                Traverse.Create(__instance).Field("_pluginsAlwaysEnabled").SetValue(true);
+        }
     }
 }

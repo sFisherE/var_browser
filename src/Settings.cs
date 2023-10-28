@@ -21,6 +21,7 @@ namespace var_browser
         public ConfigEntry<float> UIScale;
         public ConfigEntry<Vector2> UIPosition;
         public ConfigEntry<bool> MiniMode;
+        public ConfigEntry<bool> PluginsAlwaysEnabled;
 
         internal static void Init(ConfigFile config)
         {
@@ -34,6 +35,7 @@ namespace var_browser
             UIScale = config.Bind<float>("UI", "Scale", 1, "Set UI Scale.");
             UIPosition = config.Bind<Vector2>("UI", "Position", Vector2.zero, "Set UI Position.");
             MiniMode = config.Bind<bool>("UI", "MiniMode", false, "Set Mini Mode.");
+            PluginsAlwaysEnabled = config.Bind<bool>("Settings", "PluginsAlwaysEnabled", false, "Plugins will always enabled.");
         }
     }
 }

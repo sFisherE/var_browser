@@ -318,7 +318,7 @@ namespace var_browser
             GUI.DragWindow(new Rect(0, 0, m_Rect.width, 20));
 
             GUILayout.BeginHorizontal();
-            GUILayout.Label(prograssText);
+            GUILayout.Label(string.Format("<color=#00FF00><b>{0}</b></color> {1}", FileManager.s_InstalledCount, prograssText));
             if (GUILayout.Button("+", GUILayout.Width(20)))
             {
                 if (MiniMode)
