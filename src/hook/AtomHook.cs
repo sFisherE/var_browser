@@ -1,4 +1,5 @@
 ﻿using System.Runtime.InteropServices;
+using System.Collections;
 using System.Text.RegularExpressions;
 using System;
 using System.IO;
@@ -50,11 +51,6 @@ namespace var_browser
         protected static void PreSyncPresetBrowsePath(MeshVR.PresetManagerControl __instance, string url)
         {
             LogUtil.Log("[var browser hook]PreSyncPresetBrowsePath " + url);
-            //如果预设是plugin类型的，则不处理。
-            //timeline这种vap文件往往很大
-            if (url.Contains("/Plugins/"))
-                return;
-
             VarFileEntry varFileEntry = FileManager.GetVarFileEntry(url);
             if (varFileEntry != null)
             {
@@ -120,28 +116,72 @@ namespace var_browser
             JSONClass inputJSON,
             bool isMerge = false)
         {
-            if (inputJSON["storables"] != null)
+            JSONClass newInst = null;
+            if (inputJSON != null && inputJSON["storables"] != null)
             {
+                //先判断是否是包含timeline的预设
                 JSONArray array = inputJSON["storables"] as JSONArray;
                 for (int i = 0; i < array.Count; i++)
                 {
                     var node = array[i]["id"];
                     if (node != null)
                     {
-                        //如果是插件预设，则不处理。
+                        //如果是timeline的预设，则不处理。
                         //不太确定这种方式好不好。
-                        if (node.Value == "PluginManager")
+                        if (node.Value.EndsWith("_VamTimeline.AtomPlugin"))
                         {
-                            LogUtil.LogWarning("[var browser hook]PresetManager PreLoadPresetPreFromJSON break:" + __instance.presetName);
-                            return;
+                            newInst = new JSONClass();
+                            break;
+                        }
+                    }
+                }
+                //如果包含了timeline，则将timeline剔除掉，clone一个新的json文件
+                if (newInst != null)
+                {
+                    foreach (var item in inputJSON.Keys)
+                    {
+                        var node = inputJSON[item];
+                        if (item != "storables")
+                        {
+                            newInst.Add(item, node);
+                        }
+                        else
+                        {
+                            JSONArray newArray = new JSONArray();
+                            JSONArray array2 = inputJSON["storables"] as JSONArray;
+                            for (int i = 0; i < array2.Count; i++)
+                            {
+                                var node2 = array2[i]["id"];
+                                if (node2 != null)
+                                {
+                                    //剔除掉timeline的数据
+                                    if (!node2.Value.EndsWith("_VamTimeline.AtomPlugin"))
+                                    {
+                                        newArray.Add(array2[i]);
+                                    }
+                                }
+                                else
+                                {
+                                    newArray.Add(array2[i]);
+                                }
+                            }
+                            newInst.Add(item, newArray);
                         }
                     }
                 }
             }
-            //json大的时候，这一步会很慢
-            string str = inputJSON.ToString();
             LogUtil.Log("[var browser hook]PresetManager PreLoadPresetPreFromJSON " + __instance.presetName);
-            FileButton.EnsureInstalledInternal(str);
+            //json大的时候，这一步会很慢
+            if (newInst!=null)
+            {
+                string str = newInst.ToString();
+                FileButton.EnsureInstalledInternal(str);
+            }
+            else
+            {
+                string str = inputJSON.ToString();
+                FileButton.EnsureInstalledInternal(str);
+            }
         }
     }
 }

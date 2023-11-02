@@ -16,47 +16,34 @@ namespace var_browser
         {
             if (string.IsNullOrEmpty(text)) return null;
             s_TempResult.Clear();
-            //" : "(creater).(varname).(version):
-            for (int i = 0; i < text.Length - 10;)
+            //(creater).(varname).(version):
+            for (int i = 0; i < text.Length - 5;)
             {
-                //" : "
-                if (text[i] == '"'
-                    && text[i + 1] == ' '
-                    && text[i + 2] == ':'
-                    && text[i + 3] == ' '
-                    && text[i + 4] == '"')
+                //清空
+                s_TempBuilder.Length = 0;
+                int createrLen = ReadString(s_TempBuilder, text, ref i, 5);
+                if (createrLen > 0)
                 {
-                    i += 5;
-                    //清空
-                    s_TempBuilder.Length = 0;
-                    int createrLen = ReadString(s_TempBuilder, text, ref i, 5);
-                    if (createrLen > 0)
+                    if (ReadDot(s_TempBuilder, text, ref i))
                     {
-                        if (ReadDot(s_TempBuilder, text, ref i))
+                        int varNameLen = ReadString(s_TempBuilder, text, ref i, 3);
+                        if (varNameLen > 0)
                         {
-                            int varNameLen = ReadString(s_TempBuilder, text, ref i, 3);
-                            if (varNameLen > 0)
+                            if (ReadDot(s_TempBuilder, text, ref i))
                             {
-                                if (ReadDot(s_TempBuilder, text, ref i))
+                                //versionId或者latest
+                                int versionLen = ReadVersion(s_TempBuilder, text, ref i, 1);
+                                if (versionLen > 0)
                                 {
-                                    //versionId或者latest
-                                    int versionLen = ReadVersion(s_TempBuilder, text, ref i, 1);
-                                    if (versionLen > 0)
+                                    if (ReadColon(text, ref i))
                                     {
-                                        if (ReadColon(text, ref i))
-                                        {
-                                            string uid = s_TempBuilder.ToString();// string.Format("{0}.{1}.{2}", creater, varName, version);
-                                            s_TempResult.Add(uid);
-                                        }
+                                        string uid = s_TempBuilder.ToString();// string.Format("{0}.{1}.{2}", creater, varName, version);
+                                        s_TempResult.Add(uid);
                                     }
                                 }
                             }
                         }
                     }
-                }
-                else
-                {
-                    i += 1;
                 }
             }
 
@@ -65,6 +52,13 @@ namespace var_browser
         static int ReadString(StringBuilder builder, string text, ref int idx, int leastLeftCntToRead)
         {
             char peek = text[idx];
+            if (peek == '\\' || peek == '/' || peek == ':' || peek == '*' || peek == '?' || peek == '"'
+                    || peek == '<' || peek == '>' || peek == '.' || peek == '\n' || peek == '\r')
+            {
+                idx++;
+                return 0;
+            }
+
             int cnt = 0;
             while (true)
             {
@@ -76,8 +70,9 @@ namespace var_browser
                 builder.Append(peek);
                 cnt++;
                 //至少要预留这么多字节，否则后面也没法解析
-                if (text.Length <= leastLeftCntToRead + idx++)
+                if (text.Length <= leastLeftCntToRead + idx)
                     break;
+                idx++;
                 peek = text[idx];
             }
             return cnt;
@@ -90,7 +85,6 @@ namespace var_browser
                 builder.Append('.');
                 return true;
             }
-            idx++;
             return false;
         }
         static bool ReadColon(string text, ref int idx)
@@ -100,7 +94,6 @@ namespace var_browser
                 idx++;
                 return true;
             }
-            idx++;
             return false;
         }
         static int ReadVersion(StringBuilder builder, string text, ref int idx, int leastLeftCntToRead)
