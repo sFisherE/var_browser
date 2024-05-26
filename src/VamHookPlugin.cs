@@ -11,7 +11,7 @@ using UnityEngine.UI;
 namespace var_browser
 {
     //插件描述特性 分别为 插件ID 插件名字 插件版本(必须为数字)
-    [BepInPlugin("vam_var_browser", "var_browser", "0.12")]
+    [BepInPlugin("vam_var_browser", "var_browser", "0.14")]
     public partial class VamHookPlugin : BaseUnityPlugin //继承BaseUnityPlugin
     {
         private KeyUtil UIKey;
