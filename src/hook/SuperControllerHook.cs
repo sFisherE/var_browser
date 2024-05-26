@@ -7,10 +7,20 @@ using BepInEx;
 using UnityEngine;
 using HarmonyLib;
 using Prime31.MessageKit;
+using ICSharpCode.SharpZipLib.Zip;
 namespace var_browser
 {
     class SuperControllerHook
     {
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(MVR.FileManagement.FileManager), "Refresh")]
+        public static void PreRefresh()
+        {
+            LogUtil.Log("FileManager PreRefresh");
+            ZipConstants.DefaultCodePage = Settings.Instance.CodePage.Value;
+        }
+
         //点击“Return To Scene View"
         [HarmonyPostfix]
         [HarmonyPatch(typeof(SuperController), "DeactivateWorldUI")]

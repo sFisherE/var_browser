@@ -22,6 +22,7 @@ namespace var_browser
         public ConfigEntry<Vector2> UIPosition;
         public ConfigEntry<bool> MiniMode;
         public ConfigEntry<bool> PluginsAlwaysEnabled;
+        public ConfigEntry<int> CodePage;
 
         internal static void Init(ConfigFile config)
         {
@@ -36,6 +37,7 @@ namespace var_browser
             UIPosition = config.Bind<Vector2>("UI", "Position", Vector2.zero, "Set UI Position.");
             MiniMode = config.Bind<bool>("UI", "MiniMode", false, "Set Mini Mode.");
             PluginsAlwaysEnabled = config.Bind<bool>("Settings", "PluginsAlwaysEnabled", false, "Plugins will always enabled.");
+            CodePage = config.Bind<int>("Settings", "CodePage", 0, "CodePage.Chinese user would better set 936.");
         }
     }
 }

@@ -27,7 +27,6 @@ namespace var_browser
         void Awake()
         {
             singleton = this;
-            ZipConstants.DefaultCodePage = 0;
 
             Settings.Init(this.Config);
             UIKey = KeyUtil.Parse(Settings.Instance.UIKey.Value);
@@ -42,8 +41,15 @@ namespace var_browser
             {
                 m_Rect.height = 50;
             }
+            ZipConstants.DefaultCodePage = Settings.Instance.CodePage.Value;
+
 
             this.Config.SaveOnConfigSet = false;
+            Debug.Log("var browser hook start");
+            new Harmony("var_browser_hook_3").PatchAll(typeof(AtomHook));
+            new Harmony("var_browser_hook_1").PatchAll(typeof(HubResourcePackageHook));
+            new Harmony("var_browser_hook_2").PatchAll(typeof(SuperControllerHook));
+
         }
         void Start()
         {
@@ -61,9 +67,7 @@ namespace var_browser
             }
             MVR.FileManagement.FileManager.RegisterInternalSecureWritePath("AllPackages");
 
-            new Harmony("var_browser_hook_3").PatchAll(typeof(AtomHook));
-            new Harmony("var_browser_hook_1").PatchAll(typeof(HubResourcePackageHook));
-            new Harmony("var_browser_hook_2").PatchAll(typeof(SuperControllerHook));
+
         }
         void OnDestroy()
         {
