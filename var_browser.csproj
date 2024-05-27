@@ -314,6 +314,6 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy $(TargetPath) f:\vam\BepInEx\plugins</PostBuildEvent>
+    <PostBuildEvent>copy $(TargetPath) E:\vam\BepInEx\plugins</PostBuildEvent>
   </PropertyGroup>
 </Project>

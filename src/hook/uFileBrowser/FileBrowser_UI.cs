@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 //using MVR.FileManagementSecure;
 using UnityEngine;
 using UnityEngine.UI;
-
+using System.Reflection;
 namespace var_browser
 {
     public partial class FileBrowser : MonoBehaviour
@@ -100,7 +100,12 @@ namespace var_browser
 					uIDynamicPopup.label = jsc.name;
 					jsc.popup = uIDynamicPopup.popup;
 				}
-
+				var popup = transform.GetComponent<UIPopup>();
+				if (popup != null)
+				{
+					FieldInfo fieldInfo = typeof(UIPopup).GetField("maxNumber", BindingFlags.NonPublic | BindingFlags.Instance);
+					fieldInfo.SetValue(popup, 999);
+				}
 				//var uIDynamicToggle = transform.GetComponent<UIDynamicToggle>();
 				//if (uIDynamicToggle != null)
 				//{
