@@ -64,7 +64,9 @@ namespace var_browser
         [HarmonyPatch(typeof(ImageLoaderThreaded), "QueueThumbnail", new Type[] { typeof(ImageLoaderThreaded.QueuedImage) })]
         public static void PostQueueThumbnail(ImageLoaderThreaded __instance, ImageLoaderThreaded.QueuedImage qi)
         {
-            Debug.Log("PostQueueThumbnail:" + qi.imgPath+" "+ qi.textureFormat);
+            if (!Settings.Instance.UseNewCahe.Value) return;
+            if (string.IsNullOrEmpty(qi.imgPath)) return;
+            LogUtil.Log("PostQueueThumbnail:" + qi.imgPath+" "+ qi.textureFormat);
 
             if (qi.imgPath.EndsWith(".jpg")) qi.textureFormat = TextureFormat.RGB24;
             if (qi.imgPath.EndsWith(".png")) qi.textureFormat = TextureFormat.RGBA32;
@@ -92,7 +94,10 @@ namespace var_browser
         [HarmonyPatch(typeof(ImageLoaderThreaded), "QueueImage", new Type[] { typeof(ImageLoaderThreaded.QueuedImage) })]
         public static void PostQueueImage(ImageLoaderThreaded __instance, ImageLoaderThreaded.QueuedImage qi)
         {
-            Debug.Log("PostQueueImage:" + qi.imgPath+" "+ qi.textureFormat);
+            if (!Settings.Instance.UseNewCahe.Value) return;
+            if (string.IsNullOrEmpty(qi.imgPath)) return;
+
+            LogUtil.Log("PostQueueImage:" + qi.imgPath+" "+ qi.textureFormat);
 
             if (qi.imgPath.EndsWith(".jpg")) qi.textureFormat = TextureFormat.RGB24;
             if (qi.imgPath.EndsWith(".png")) qi.textureFormat = TextureFormat.RGBA32;
@@ -128,18 +133,22 @@ namespace var_browser
         [HarmonyPatch(typeof(ImageLoaderThreaded.QueuedImage), "DoCallback")]
         public static void PreDoCallback(ImageLoaderThreaded.QueuedImage __instance)
         {
+            if (!Settings.Instance.UseNewCahe.Value) return;
+            if (string.IsNullOrEmpty(__instance.imgPath)) return;
             if (__instance.tex != null)
             {
-                Debug.Log("PreDoCallback:" + __instance.imgPath + " " + __instance.textureFormat+" "+__instance.tex.format);
-
-                var oldTex = __instance.tex;
-
+                LogUtil.Log("PreDoCallback:" + __instance.imgPath + " " + __instance.textureFormat+" "+__instance.tex.format);
                 if (__instance.tex.format == TextureFormat.DXT1
                     || __instance.tex.format == TextureFormat.DXT5
                     || __instance.tex.format == TextureFormat.RGB24
                     || __instance.tex.format == TextureFormat.RGBA32)
                 {
                     var tex = ImageLoadingMgr.singleton.GetResizedTextureFromBytes(__instance);
+                    if (tex != null)
+                    {
+                        __instance.skipCache = true;
+                        LogUtil.Log("skipCache:" + __instance.imgPath);
+                    }
                 }
             }
 
@@ -149,6 +158,7 @@ namespace var_browser
         [HarmonyPatch(typeof(DAZMorph), "LoadDeltas")]
         public static void PostLoadDeltasFromBinaryFile(DAZMorph __instance)
         {
+            if (!Settings.Instance.UseNewCahe.Value) return;
             var path = __instance.deltasLoadPath;
             if (string.IsNullOrEmpty(path)) return;
             if (__instance.deltasLoaded) return;

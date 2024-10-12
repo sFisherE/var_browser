@@ -394,6 +394,8 @@ namespace var_browser
                         Resources.UnloadUnusedAssets();
                     }
                     GUILayout.EndHorizontal();
+                    Settings.Instance.UseNewCahe.Value = GUILayout.Toggle(Settings.Instance.UseNewCahe.Value, "Use New Cache");
+
                     //if (GUILayout.Button("HeapDump"))
                     //{
                     //    //UnityHeapDump.Create();

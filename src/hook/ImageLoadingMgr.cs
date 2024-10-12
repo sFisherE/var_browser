@@ -3,6 +3,9 @@ using System.IO;
 using UnityEngine;
 namespace var_browser
 {
+    /// <summary>
+    /// 贴图可能需要读取，所以不能把cpu那份内存干掉
+    /// </summary>
     public class ImageLoadingMgr : MonoBehaviour
     {
         [System.Serializable]
@@ -20,6 +23,7 @@ namespace var_browser
         Dictionary<string, Texture2D> cache = new Dictionary<string, Texture2D>();
         void RegisterTexture(string path, Texture2D tex)
         {
+            if (string.IsNullOrEmpty(path)) return;
             if (cache.ContainsKey(path))
                 return;
             if (tex == null)
@@ -54,11 +58,13 @@ namespace var_browser
 
             var diskCachePath = GetDiskCachePath(qi, width, height);
 
-            Debug.Log("request img:"+ diskCachePath);
+            if (string.IsNullOrEmpty(diskCachePath)) return false;
+
+            LogUtil.Log("request img:"+ diskCachePath);
 
             if (cache.ContainsKey(diskCachePath))
             {
-                Debug.Log("request use mem cache:" + diskCachePath);
+                LogUtil.Log("request use mem cache:" + diskCachePath);
                 qi.tex = cache[diskCachePath];
                 DoCallback(qi);
                 return true;
@@ -67,10 +73,10 @@ namespace var_browser
             var thumbnailPath = diskCachePath + ".DXT1";
             if (File.Exists(thumbnailPath))
             {
-                Debug.Log("request use disk cache:" + thumbnailPath);
+                LogUtil.Log("request use disk cache:" + thumbnailPath);
 
                 var bytes = File.ReadAllBytes(thumbnailPath);
-                Debug.Log("load bytes:" + bytes.Length);
+                LogUtil.Log("load bytes:" + bytes.Length);
                 Texture2D tex = new Texture2D(qi.width, qi.height, TextureFormat.DXT1, true);
                 bool success = true;
                 try
@@ -80,7 +86,7 @@ namespace var_browser
                 catch
                 {
                     success = false;
-                    Debug.LogError("request load disk cache fail:" + thumbnailPath);
+                    LogUtil.LogError("request load disk cache fail:" + thumbnailPath);
                 }
                 if (success)
                 {
@@ -96,10 +102,10 @@ namespace var_browser
             else if(File.Exists(diskCachePath + ".DXT5"))
             {
                 thumbnailPath = diskCachePath + ".DXT5";
-                Debug.Log("request use disk cache:" + thumbnailPath);
+                LogUtil.Log("request use disk cache:" + thumbnailPath);
 
                 var bytes = File.ReadAllBytes(thumbnailPath);
-                Debug.Log("load bytes:" + bytes.Length);
+                LogUtil.Log("load bytes:" + bytes.Length);
                 Texture2D tex = new Texture2D(qi.width, qi.height, TextureFormat.DXT5, true);
                 bool success = true;
                 try
@@ -109,7 +115,7 @@ namespace var_browser
                 catch
                 {
                     success = false;
-                    Debug.LogError("request load disk cache fail:" + thumbnailPath);
+                    LogUtil.LogError("request load disk cache fail:" + thumbnailPath);
                 }
                 if (success)
                 {
@@ -122,7 +128,7 @@ namespace var_browser
                     return true;
                 }
             }
-            Debug.Log("request not use cache:" + thumbnailPath);
+            LogUtil.Log("request not use cache:" + thumbnailPath);
 
             return false;
         }
@@ -181,7 +187,7 @@ namespace var_browser
             //不仅需要path
             if (cache.ContainsKey(diskCachePath))
             {
-                Debug.Log("resize use mem cache:" + diskCachePath);
+                LogUtil.Log("resize use mem cache:" + diskCachePath);
                 UnityEngine.Object.Destroy(qi.tex);
                 resultTexture = cache[diskCachePath];
                 qi.tex = resultTexture;
@@ -191,18 +197,18 @@ namespace var_browser
             var thumbnailPath = diskCachePath + ext;
             if (File.Exists(thumbnailPath))
             {
-                Debug.Log("resize use disk cache:" + thumbnailPath);
+                LogUtil.Log("resize use disk cache:" + thumbnailPath);
                 var bytes = File.ReadAllBytes(thumbnailPath);
 
                 resultTexture = new Texture2D(width, height, localFormat, true);
                 resultTexture.LoadRawTextureData(bytes);
-                resultTexture.Apply(false, true);
+                resultTexture.Apply();
                 RegisterTexture(diskCachePath, resultTexture);
                 return resultTexture;
             }
 
 
-            Debug.Log("resize generate cache:" + thumbnailPath);
+            LogUtil.Log("resize generate cache:" + thumbnailPath);
 
             var tempTexture = new RenderTexture(width, height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Default);
 
@@ -225,11 +231,11 @@ namespace var_browser
             resultTexture = new Texture2D(width, height, format, true);
             RenderTexture.active = tempTexture;
             resultTexture.ReadPixels(new Rect(0, 0, width, height), 0, 0);
-            resultTexture.Apply(true,false);
+            resultTexture.Apply();
             RenderTexture.active = null;
             resultTexture.Compress(true);
 
-            Debug.Log(string.Format("convert {0}({1},{2})mip:{6}->{3}({4},{5})mip:{7}", 
+            LogUtil.Log(string.Format("convert {0}({1},{2})mip:{6}->{3}({4},{5})mip:{7}", 
                 qi.tex.format, qi.tex.width, qi.tex.height, 
                 resultTexture.format, width, height,qi.tex.mipmapCount, resultTexture.mipmapCount));
 
@@ -237,7 +243,7 @@ namespace var_browser
             byte[] texBytes = resultTexture.GetRawTextureData();
             File.WriteAllBytes(thumbnailPath, texBytes);
 
-            resultTexture.Apply(false, true);
+            resultTexture.Apply();
             RegisterTexture(diskCachePath, resultTexture);
 
             UnityEngine.Object.Destroy(qi.tex);

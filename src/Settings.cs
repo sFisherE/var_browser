@@ -23,7 +23,7 @@ namespace var_browser
         public ConfigEntry<bool> MiniMode;
         public ConfigEntry<bool> PluginsAlwaysEnabled;
         public ConfigEntry<int> CodePage;
-        public ConfigEntry<bool> OptimizeTexture;
+        public ConfigEntry<bool> UseNewCahe;
         public ConfigEntry<int> ThumbnailSize;
 
         internal static void Init(ConfigFile config)
@@ -40,7 +40,7 @@ namespace var_browser
             MiniMode = config.Bind<bool>("UI", "MiniMode", false, "Set Mini Mode.");
             PluginsAlwaysEnabled = config.Bind<bool>("Settings", "PluginsAlwaysEnabled", false, "Plugins will always enabled.");
             CodePage = config.Bind<int>("Settings", "CodePage", 0, "CodePage.Chinese user would better set 936.");
-            OptimizeTexture = config.Bind<bool>("Settings", "OptimizeTexture", false, "Resize texture.");
+            UseNewCahe = config.Bind<bool>("Settings", "UseNewCahe", false, "use new cache for asset.");
             ThumbnailSize = config.Bind<int>("Settings", "ThumbnailSize", 256, "Thumbnail size.");
         }
     }
