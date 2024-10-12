@@ -12,7 +12,8 @@
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
-    <TargetFrameworkProfile>Unity Full v3.5</TargetFrameworkProfile>
+    <TargetFrameworkProfile>
+    </TargetFrameworkProfile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -22,6 +23,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -30,6 +32,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="0Harmony20">
@@ -45,9 +48,7 @@
     <Reference Include="BepInEx">
       <HintPath>..\..\..\..\vam\BepInEx\core\BepInEx.dll</HintPath>
     </Reference>
-    <Reference Include="ICSharpCode.SharpZipLib">
-      <HintPath>..\..\..\..\vam\VaM_Data\Managed\ICSharpCode.SharpZipLib.dll</HintPath>
-    </Reference>
+    <Reference Include="ICSharpCode.SharpZipLib" />
     <Reference Include="MHLab.PATCH">
       <HintPath>..\..\..\..\vam\VaM_Data\Managed\MHLab.PATCH.dll</HintPath>
     </Reference>
@@ -57,7 +58,6 @@
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Data" />
-    <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
     <Reference Include="UnityEngine">
       <HintPath>..\..\..\..\vam\VaM_Data\Managed\UnityEngine.dll</HintPath>
@@ -256,9 +256,11 @@
   <ItemGroup>
     <Compile Include="src\GlobalInfo.cs" />
     <Compile Include="src\hook\AtomHook.cs" />
+    <Compile Include="src\hook\DAZMorphMgr.cs" />
     <Compile Include="src\hook\FileManagement\VarPackageMgr.cs" />
     <Compile Include="src\hook\HubResourcePackageHook.cs" />
     <Compile Include="src\hook\CustomImageLoaderThreaded.cs" />
+    <Compile Include="src\hook\ImageLoadingMgr.cs" />
     <Compile Include="src\hook\SuperControllerHook.cs" />
     <Compile Include="src\hook\TagFilter.cs" />
     <Compile Include="src\hook\Tools.cs" />
@@ -314,6 +316,6 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy $(TargetPath) E:\vam\BepInEx\plugins</PostBuildEvent>
+    <PostBuildEvent>copy $(TargetPath) "G:\vam\Virt A Mate Simple\BepInEx\plugins"</PostBuildEvent>
   </PropertyGroup>
 </Project>
