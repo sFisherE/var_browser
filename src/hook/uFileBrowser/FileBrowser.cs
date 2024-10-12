@@ -1003,8 +1003,8 @@ namespace var_browser
 
 				CustomImageLoaderThreaded.QueuedImage queuedImage = new CustomImageLoaderThreaded.QueuedImage();
 				queuedImage.imgPath = fb.imgPath;
-				queuedImage.width = 512;
-				queuedImage.height = 512;
+				queuedImage.width = 256;
+				queuedImage.height = 256;
 				queuedImage.setSize = true;
 				queuedImage.fillBackground = true;
 				queuedImage.rawImageToLoad = fb.altIcon;

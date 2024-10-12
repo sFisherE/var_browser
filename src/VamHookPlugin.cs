@@ -197,6 +197,7 @@ namespace var_browser
                 var child = Tools.AddChild(this.gameObject);
                 m_FileManager = child.AddComponent<FileManager>();
                 child.AddComponent<var_browser.CustomImageLoaderThreaded>();
+                child.AddComponent<var_browser.ImageLoadingMgr>();
                 FileManager.RegisterRefreshHandler(() =>
                 {
                     m_FileManagerInited = true;
@@ -382,17 +383,16 @@ namespace var_browser
                     {
                         Refresh();
                     }
-                    //if (GUILayout.Button("Release Memory"))
-                    //{
-                    //    //ImageLoaderThreaded.Destroy();
-                    //    MethodInfo onDestroyMethod = typeof(ImageLoaderThreaded).GetMethod("OnDestroy", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                    //    onDestroyMethod.Invoke(ImageLoaderThreaded.singleton, new object[0] {});
+                    if (GUILayout.Button("GC"))
+                    {
+                        //MethodInfo onDestroyMethod = typeof(ImageLoaderThreaded).GetMethod("OnDestroy", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                        //onDestroyMethod.Invoke(ImageLoaderThreaded.singleton, new object[0] { });
+                        //CustomImageLoaderThreaded.singleton.OnDestroy();
+                        DAZMorphMgr.singleton.cache.Clear();
 
-                    //    CustomImageLoaderThreaded.singleton.OnDestroy();
-                    //    GC.Collect();
-                    //    Resources.UnloadUnusedAssets();
-
-                    //}
+                        GC.Collect();
+                        Resources.UnloadUnusedAssets();
+                    }
                     GUILayout.EndHorizontal();
                     //if (GUILayout.Button("HeapDump"))
                     //{

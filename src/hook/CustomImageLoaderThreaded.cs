@@ -625,7 +625,7 @@ namespace var_browser
 
 			public void DoCallback()
 			{
-				if (rawImageToLoad != null)
+                if (rawImageToLoad != null)
 				{
 					rawImageToLoad.texture = tex;
 				}
@@ -635,7 +635,7 @@ namespace var_browser
 					callback = null;
 				}
 			}
-		}
+        }
 
 		protected class ImageLoaderTaskInfo
 		{
@@ -839,26 +839,32 @@ namespace var_browser
 			return null;
 		}
 
-		public void QueueImage(QueuedImage qi)
-		{
-			if (queuedImages != null)
-			{
-				queuedImages.AddLast(qi);
-			}
-			numRealQueuedImages++;
-			progressMax++;
-		}
+        public void QueueImage(QueuedImage qi)
+        {
+            //if (ImageLoadingMgr.singleton.Request(qi))
+            //    return;
 
-		public void QueueThumbnail(QueuedImage qi)
-		{
-			qi.isThumbnail = true;
-			if (queuedImages != null)
-			{
-				queuedImages.AddLast(qi);
-			}
-		}
+            if (queuedImages != null)
+            {
+                queuedImages.AddLast(qi);
+            }
+            numRealQueuedImages++;
+            progressMax++;
+        }
 
-		public void QueueThumbnailImmediate(QueuedImage qi)
+        public void QueueThumbnail(QueuedImage qi)
+        {
+            qi.isThumbnail = true;
+            //if (ImageLoadingMgr.singleton.Request(qi))
+            //    return;
+
+            if (queuedImages != null)
+            {
+                queuedImages.AddLast(qi);
+            }
+        }
+
+        public void QueueThumbnailImmediate(QueuedImage qi)
 		{
 			qi.isThumbnail = true;
 			if (queuedImages != null)
