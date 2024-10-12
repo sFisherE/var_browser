@@ -12,20 +12,223 @@ using Valve.Newtonsoft.Json;
 
 namespace var_browser
 {
-	[System.Serializable]
+    
+    [System.Serializable]
 	public class SerializableVarPackage
 	{
-		public List<string> FileEntryNames;
-		public List<string> FileEntryLastWriteTimes;
-		public List<long> FileEntrySizes;
+        public List<string> FileEntryNames;
+        public List<string> FileEntryLastWriteTimes;
+        public List<long> FileEntrySizes;
 		public List<string> RecursivePackageDependencies;
 
 
 		public List<string> ClothingFileEntryNames;
-		public List<string> ClothingTags;
-		public List<string> HairFileEntryNames;
-		public List<string> HairTags;
-	}
+        public List<string> ClothingTags;
+        public List<string> HairFileEntryNames;
+        public List<string> HairTags;
+
+		public void Read(BinaryReader reader)
+		{
+            //FileEntryNames
+            {
+                var count = reader.ReadInt32();
+                if (count > 0)
+                {
+                    FileEntryNames = new List<string>(count);
+                    for (int i = 0; i < count; i++)
+                    {
+                        FileEntryNames.Add(reader.ReadString());
+                    }
+                }
+            }
+            //FileEntryLastWriteTimes
+            {
+                var count = reader.ReadInt32();
+                if (count > 0)
+                {
+                    FileEntryLastWriteTimes = new List<string>(count);
+                    for (int i = 0; i < count; i++)
+                    {
+                        FileEntryLastWriteTimes.Add(reader.ReadString());
+                    }
+                }
+            }
+            //FileEntrySizes
+            {
+                var count = reader.ReadInt32();
+                if (count > 0)
+                {
+                    FileEntrySizes = new List<long>(count);
+                    for (int i = 0; i < count; i++)
+                    {
+                        FileEntrySizes.Add(reader.ReadInt64());
+                    }
+                }
+            }
+            //RecursivePackageDependencies
+            {
+                var count = reader.ReadInt32();
+                if (count > 0)
+                {
+                    RecursivePackageDependencies = new List<string>(count);
+                    for (int i = 0; i < count; i++)
+                    {
+                        RecursivePackageDependencies.Add(reader.ReadString());
+                    }
+                }
+            }
+
+            //ClothingFileEntryNames
+            {
+                var count = reader.ReadInt32();
+                if (count > 0)
+                {
+                    ClothingFileEntryNames = new List<string>(count);
+                    for (int i = 0; i < count; i++)
+                    {
+                        ClothingFileEntryNames.Add(reader.ReadString());
+                    }
+                }
+            }
+            //ClothingTags
+            {
+                var count = reader.ReadInt32();
+                if (count > 0)
+                {
+                    ClothingTags = new List<string>(count);
+                    for (int i = 0; i < count; i++)
+                    {
+                        ClothingTags.Add(reader.ReadString());
+                    }
+                }
+            }
+            //HairFileEntryNames
+            {
+                var count = reader.ReadInt32();
+                if (count > 0)
+                {
+                    HairFileEntryNames = new List<string>(count);
+                    for (int i = 0; i < count; i++)
+                    {
+                        HairFileEntryNames.Add(reader.ReadString());
+                    }
+                }
+            }
+            //HairTags
+            {
+                var count = reader.ReadInt32();
+                if (count > 0)
+                {
+                    HairTags = new List<string>(count);
+                    for (int i = 0; i < count; i++)
+                    {
+                        HairTags.Add(reader.ReadString());
+                    }
+                }
+            }
+        }
+
+		public void Write(BinaryWriter writer)
+		{
+            //FileEntryNames
+            {
+                var count = FileEntryNames?.Count ?? 0;
+                writer.Write(count);
+                if (count > 0)
+                {
+                    for (int i = 0; i < FileEntryNames.Count; i++)
+                    {
+						writer.Write(FileEntryNames[i]);
+                    }
+                }
+            }
+            //FileEntryLastWriteTimes
+            {
+                var count = FileEntryLastWriteTimes?.Count ?? 0;
+                writer.Write(count);
+                if (count > 0)
+                {
+                    for (int i = 0; i < FileEntryLastWriteTimes.Count; i++)
+                    {
+                        writer.Write(FileEntryLastWriteTimes[i]);
+                    }
+                }
+            }
+            //FileEntrySizes
+            {
+                var count = FileEntrySizes?.Count ?? 0;
+                writer.Write(count);
+                if (count > 0)
+                {
+                    for (int i = 0; i < FileEntrySizes.Count; i++)
+                    {
+                        writer.Write(FileEntrySizes[i]);
+                    }
+                }
+            }
+            //RecursivePackageDependencies
+            {
+                var count = RecursivePackageDependencies?.Count ?? 0;
+                writer.Write(count);
+                if (count > 0)
+                {
+                    for (int i = 0; i < RecursivePackageDependencies.Count; i++)
+                    {
+                        writer.Write(RecursivePackageDependencies[i]);
+                    }
+                }
+            }
+
+            //ClothingFileEntryNames
+            {
+                var count = ClothingFileEntryNames?.Count ?? 0;
+                writer.Write(count);
+                if (count > 0)
+                {
+                    for (int i = 0; i < ClothingFileEntryNames.Count; i++)
+                    {
+                        writer.Write(ClothingFileEntryNames[i]);
+                    }
+                }
+            }
+            //ClothingTags
+            {
+                var count = ClothingTags?.Count ?? 0;
+                writer.Write(count);
+                if (count > 0)
+                {
+                    for (int i = 0; i < ClothingTags.Count; i++)
+                    {
+                        writer.Write(ClothingTags[i]);
+                    }
+                }
+            }
+            //HairFileEntryNames
+            {
+                var count = HairFileEntryNames?.Count ?? 0;
+                writer.Write(count);
+                if (count > 0)
+                {
+                    for (int i = 0; i < HairFileEntryNames.Count; i++)
+                    {
+                        writer.Write(HairFileEntryNames[i]);
+                    }
+                }
+            }
+            //HairTags
+            {
+                var count = HairTags?.Count ?? 0;
+                writer.Write(count);
+                if (count > 0)
+                {
+                    for (int i = 0; i < HairTags.Count; i++)
+                    {
+                        writer.Write(HairTags[i]);
+                    }
+                }
+            }
+        }
+    }
 
 	public class VarPackage
 	{

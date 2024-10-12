@@ -607,7 +607,7 @@ namespace var_browser
 			int step = 20;
             if (VarPackageMgr.singleton.existCache)
             {
-				step = 100;
+				step = 200;
             }
 			for (int i = 0; i < list.Count; i++)
             {

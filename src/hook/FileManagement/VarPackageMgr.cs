@@ -18,7 +18,7 @@ namespace var_browser
     {
         public static VarPackageMgr singleton=new VarPackageMgr();
 
-        static string CachePath = "Cache/AllPackagesJSON/" + "AllPackages.bytes";
+        static string CachePath = "Cache/AllPackagesJSON/" + "AllPackages.bytes2";
         public Dictionary<string, SerializableVarPackage> lookup = new Dictionary<string, SerializableVarPackage>();
         
         public SerializableVarPackage TryGetCache(string uid)
@@ -40,15 +40,19 @@ namespace var_browser
                 {
                     if (stream != null)
                     {
-                        BinaryFormatter formater = new BinaryFormatter();
-                        List<KeyValuePair<string, SerializableVarPackage>> data = formater.Deserialize(stream) as List<KeyValuePair<string, SerializableVarPackage>>;
-                        if (data != null)
+                        BinaryReader reader=new BinaryReader(stream);
+                        var count = reader.ReadInt32();
+                        if (count > 0)
                         {
-                            for (int i = 0; i < data.Count; i++)
+                            for (int i = 0; i < count; i++)
                             {
-                                var item = data[i];
-                                if(!lookup.ContainsKey(item.Key))
-                                    lookup.Add(item.Key, item.Value);
+                                var key = reader.ReadString();
+                                SerializableVarPackage pkg = new SerializableVarPackage();
+                                pkg.Read(reader);
+                                var pair = new KeyValuePair<string, SerializableVarPackage>(key, pkg);
+                                if (!lookup.ContainsKey(key))
+                                    lookup.Add(key, pkg);
+
                             }
                         }
                     }
@@ -75,17 +79,17 @@ namespace var_browser
             }
             if (dirty)
             {
-                var packages = new List<KeyValuePair<string, SerializableVarPackage>>();
-                foreach(var item in lookup)
-                {
-                    packages.Add(new KeyValuePair<string, SerializableVarPackage>(item.Key,item.Value));
-                }
                 using (FileStream stream = new FileStream(CachePath, FileMode.Create))
                 {
-                    BinaryFormatter formatter = new BinaryFormatter();
-                    formatter.Serialize(stream, packages);
-                    stream.Flush();
-                    stream.Close();
+                    BinaryWriter writer = new BinaryWriter(stream);
+                    writer.Write(lookup.Count);
+                    foreach (var item in lookup)
+                    {
+                        writer.Write(item.Key);
+                        item.Value.Write(writer);
+                    }
+                    writer.Flush();
+                    writer.Close();
                 }
             }
         }
