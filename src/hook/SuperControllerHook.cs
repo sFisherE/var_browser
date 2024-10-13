@@ -60,13 +60,35 @@ namespace var_browser
                 Traverse.Create(__instance).Field("_pluginsAlwaysEnabled").SetValue(true);
         }
 
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(ImageLoaderThreaded), "ProcessImageImmediate", new Type[] { typeof(ImageLoaderThreaded.QueuedImage) })]
+        public static void PreProcessImageImmediate(ImageLoaderThreaded __instance, ImageLoaderThreaded.QueuedImage qi)
+        {
+            if (!Settings.Instance.UseNewCahe.Value) return;
+            if (string.IsNullOrEmpty(qi.imgPath)) return;
+            if (qi.textureFormat != TextureFormat.DXT1
+                && qi.textureFormat != TextureFormat.DXT5
+                && qi.textureFormat != TextureFormat.RGB24
+                && qi.textureFormat != TextureFormat.RGBA32)
+                return;
+
+            if (ImageLoadingMgr.singleton.Request(qi))
+            {
+                //跳过原有的逻辑
+                qi.skipCache = true;
+                qi.processed = true;
+                qi.finished = true;
+            }
+        }
+
+
+
         [HarmonyPostfix]
         [HarmonyPatch(typeof(ImageLoaderThreaded), "QueueThumbnail", new Type[] { typeof(ImageLoaderThreaded.QueuedImage) })]
         public static void PostQueueThumbnail(ImageLoaderThreaded __instance, ImageLoaderThreaded.QueuedImage qi)
         {
             if (!Settings.Instance.UseNewCahe.Value) return;
             if (string.IsNullOrEmpty(qi.imgPath)) return;
-            LogUtil.Log("PostQueueThumbnail:" + qi.imgPath+" "+ qi.textureFormat);
 
             if (qi.imgPath.EndsWith(".jpg")) qi.textureFormat = TextureFormat.RGB24;
             if (qi.imgPath.EndsWith(".png")) qi.textureFormat = TextureFormat.RGBA32;
@@ -75,6 +97,7 @@ namespace var_browser
                 && qi.textureFormat != TextureFormat.RGB24
                 && qi.textureFormat != TextureFormat.RGBA32)
                 return;
+            LogUtil.Log("PostQueueThumbnail:" + qi.imgPath + " " + qi.textureFormat);
 
             qi.isThumbnail = true;
             if (ImageLoadingMgr.singleton.Request(qi))
@@ -83,9 +106,56 @@ namespace var_browser
                 qi.skipCache = true;
                 var field = Traverse.Create(__instance).Field("queuedImages");
                 var queuedImages = field.GetValue() as LinkedList<ImageLoaderThreaded.QueuedImage>;
-                if (queuedImages != null)
+
+                queuedImagesListCache.Clear();
+                foreach (var item in queuedImages)
                 {
-                    queuedImages.RemoveLast();
+                    if (item.imgPath == qi.imgPath)
+                    {
+                        queuedImagesListCache.Add(item);
+                    }
+                }
+                foreach(var item in queuedImagesListCache)
+                {
+                    queuedImages.Remove(item);
+                }
+                return;
+            }
+        }
+        public static List<ImageLoaderThreaded.QueuedImage> queuedImagesListCache = new List<ImageLoaderThreaded.QueuedImage>();
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(ImageLoaderThreaded), "QueueThumbnailImmediate", new Type[] { typeof(ImageLoaderThreaded.QueuedImage) })]
+        public static void PostQueueThumbnailImmediate(ImageLoaderThreaded __instance, ImageLoaderThreaded.QueuedImage qi)
+        {
+            if (!Settings.Instance.UseNewCahe.Value) return;
+            if (string.IsNullOrEmpty(qi.imgPath)) return;
+            if (qi.textureFormat != TextureFormat.DXT1
+                && qi.textureFormat != TextureFormat.DXT5
+                && qi.textureFormat != TextureFormat.RGB24
+                && qi.textureFormat != TextureFormat.RGBA32)
+                return;
+
+            LogUtil.Log("PostQueueThumbnailImmediate:" + qi.imgPath + " " + qi.textureFormat);
+
+            if (ImageLoadingMgr.singleton.Request(qi))
+            {
+                //跳过
+                qi.skipCache = true;
+                var field = Traverse.Create(__instance).Field("queuedImages");
+                var queuedImages = field.GetValue() as LinkedList<ImageLoaderThreaded.QueuedImage>;
+
+                queuedImagesListCache.Clear();
+                foreach (var item in queuedImages)
+                {
+                    if (item.imgPath == qi.imgPath)
+                    {
+                        queuedImagesListCache.Add(item);
+                    }
+                }
+                foreach (var item in queuedImagesListCache)
+                {
+                    queuedImages.Remove(item);
                 }
                 return;
             }
@@ -97,7 +167,6 @@ namespace var_browser
             if (!Settings.Instance.UseNewCahe.Value) return;
             if (string.IsNullOrEmpty(qi.imgPath)) return;
 
-            LogUtil.Log("PostQueueImage:" + qi.imgPath+" "+ qi.textureFormat);
 
             if (qi.imgPath.EndsWith(".jpg")) qi.textureFormat = TextureFormat.RGB24;
             if (qi.imgPath.EndsWith(".png")) qi.textureFormat = TextureFormat.RGBA32;
@@ -107,15 +176,26 @@ namespace var_browser
                 && qi.textureFormat != TextureFormat.RGB24
                 && qi.textureFormat != TextureFormat.RGBA32)
                 return;
+            LogUtil.Log("PostQueueImage:" + qi.imgPath + " " + qi.textureFormat);
+
             if (ImageLoadingMgr.singleton.Request(qi))
             {
                 qi.skipCache = true;
                 var field = Traverse.Create(__instance).Field("queuedImages");
                 var queuedImages = field.GetValue() as LinkedList<ImageLoaderThreaded.QueuedImage>;
-                if (queuedImages != null)
+                queuedImagesListCache.Clear();
+                foreach (var item in queuedImages)
                 {
-                    queuedImages.RemoveLast();
+                    if (item.imgPath == qi.imgPath)
+                    {
+                        queuedImagesListCache.Add(item);
+                    }
                 }
+                foreach (var item in queuedImagesListCache)
+                {
+                    queuedImages.Remove(item);
+                }
+
                 var field2 = Traverse.Create(__instance).Field("numRealQueuedImages");
                 var numRealQueuedImages = (int)field2.GetValue();
                 field2.SetValue(numRealQueuedImages - 1);
@@ -137,12 +217,13 @@ namespace var_browser
             if (string.IsNullOrEmpty(__instance.imgPath)) return;
             if (__instance.tex != null)
             {
-                LogUtil.Log("PreDoCallback:" + __instance.imgPath + " " + __instance.textureFormat+" "+__instance.tex.format);
                 if (__instance.tex.format == TextureFormat.DXT1
                     || __instance.tex.format == TextureFormat.DXT5
                     || __instance.tex.format == TextureFormat.RGB24
                     || __instance.tex.format == TextureFormat.RGBA32)
                 {
+                    LogUtil.Log("PreDoCallback:" + __instance.imgPath + " " + __instance.textureFormat + " " + __instance.tex.format);
+
                     var tex = ImageLoadingMgr.singleton.GetResizedTextureFromBytes(__instance);
                     if (tex != null)
                     {

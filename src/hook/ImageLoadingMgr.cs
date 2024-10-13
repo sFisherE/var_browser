@@ -77,7 +77,7 @@ namespace var_browser
 
                 var bytes = File.ReadAllBytes(thumbnailPath);
                 LogUtil.Log("load bytes:" + bytes.Length);
-                Texture2D tex = new Texture2D(qi.width, qi.height, TextureFormat.DXT1, true);
+                Texture2D tex = new Texture2D(qi.width, qi.height, TextureFormat.DXT1, false);
                 bool success = true;
                 try
                 {
@@ -106,7 +106,7 @@ namespace var_browser
 
                 var bytes = File.ReadAllBytes(thumbnailPath);
                 LogUtil.Log("load bytes:" + bytes.Length);
-                Texture2D tex = new Texture2D(qi.width, qi.height, TextureFormat.DXT5, true);
+                Texture2D tex = new Texture2D(qi.width, qi.height, TextureFormat.DXT5, false);
                 bool success = true;
                 try
                 {
@@ -132,8 +132,6 @@ namespace var_browser
 
             return false;
         }
-        const int PREVIEW_WIDTH = 512;
-        const int PREVIEW_HEIGHT = 512;
         static int ClosestPowerOfTwo(int value)
         {
             int power = 1;
@@ -145,7 +143,7 @@ namespace var_browser
         }
         public Texture2D GetTexture2DFromRenderTexture(RenderTexture rTex, TextureFormat format)
         {
-            Texture2D texture2D = new Texture2D(rTex.width, rTex.height, format,true);
+            Texture2D texture2D = new Texture2D(rTex.width, rTex.height, format, false);
             RenderTexture.active = rTex;
 
             texture2D.ReadPixels(new Rect(0, 0, rTex.width, rTex.height), 0, 0);
@@ -200,7 +198,7 @@ namespace var_browser
                 LogUtil.Log("resize use disk cache:" + thumbnailPath);
                 var bytes = File.ReadAllBytes(thumbnailPath);
 
-                resultTexture = new Texture2D(width, height, localFormat, true);
+                resultTexture = new Texture2D(width, height, localFormat, false);
                 resultTexture.LoadRawTextureData(bytes);
                 resultTexture.Apply();
                 RegisterTexture(diskCachePath, resultTexture);
@@ -228,7 +226,7 @@ namespace var_browser
             {
                 format = TextureFormat.RGBA32;
             }
-            resultTexture = new Texture2D(width, height, format, true);
+            resultTexture = new Texture2D(width, height, format, false);
             RenderTexture.active = tempTexture;
             resultTexture.ReadPixels(new Rect(0, 0, width, height), 0, 0);
             resultTexture.Apply();
@@ -255,8 +253,8 @@ namespace var_browser
         {
             width = ClosestPowerOfTwo(width / 2);
             height = ClosestPowerOfTwo(height / 2);
-
-            while (width > 512 || height > 512)
+            int maxSize = Settings.Instance.MaxTextureSize.Value;
+            while (width > maxSize || height > maxSize)
             {
                 width /= 2;
                 height /= 2;
