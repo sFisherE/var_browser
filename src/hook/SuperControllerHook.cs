@@ -8,6 +8,7 @@ using UnityEngine;
 using HarmonyLib;
 using Prime31.MessageKit;
 using ICSharpCode.SharpZipLib.Zip;
+using GPUTools.Hair.Scripts.Settings;
 namespace var_browser
 {
     class SuperControllerHook
@@ -274,4 +275,25 @@ namespace var_browser
             }
         }
     }
+
+    //[HarmonyPatch(typeof(HairLODSettings), nameof(HairLODSettings.GetDencity))]
+    //class PatchHairLODSettings1
+    //{
+    //    static void Postfix(HairLODSettings __instance,ref int __result)
+    //    {
+    //        //if (!Settings.Instance.UseNewCahe.Value) return;
+    //        //if (!__instance.UseFixedSettings)
+    //            __result = 1;// (int)__instance.Density.Min;
+    //    }
+    //}
+    //[HarmonyPatch(typeof(HairLODSettings), nameof(HairLODSettings.GetWidth))]
+    //class PatchHairLODSettings2
+    //{
+    //    static void Postfix(HairLODSettings __instance, ref float __result)
+    //    {
+    //        //if (!Settings.Instance.UseNewCahe.Value) return;
+    //        //if (!__instance.UseFixedSettings)
+    //        __result = __result*5;
+    //    }
+    //}
 }

@@ -11,7 +11,7 @@ using UnityEngine.UI;
 namespace var_browser
 {
     //插件描述特性 分别为 插件ID 插件名字 插件版本(必须为数字)
-    [BepInPlugin("vam_var_browser", "var_browser", "0.14")]
+    [BepInPlugin("vam_var_browser", "var_browser", "0.15")]
     public partial class VamHookPlugin : BaseUnityPlugin //继承BaseUnityPlugin
     {
         private KeyUtil UIKey;
@@ -46,9 +46,12 @@ namespace var_browser
 
             this.Config.SaveOnConfigSet = false;
             Debug.Log("var browser hook start");
-            new Harmony("var_browser_hook_3").PatchAll(typeof(AtomHook));
-            new Harmony("var_browser_hook_1").PatchAll(typeof(HubResourcePackageHook));
-            new Harmony("var_browser_hook_2").PatchAll(typeof(SuperControllerHook));
+            var harmony = new Harmony("var_browser_hook");
+            harmony.PatchAll();
+            harmony.PatchAll(typeof(AtomHook));
+            harmony.PatchAll(typeof(HubResourcePackageHook));
+            harmony.PatchAll(typeof(SuperControllerHook));
+            //harmony.PatchAll(typeof(PatchHairLODSettings));
 
         }
         void Start()
@@ -389,6 +392,7 @@ namespace var_browser
                         //onDestroyMethod.Invoke(ImageLoaderThreaded.singleton, new object[0] { });
                         //CustomImageLoaderThreaded.singleton.OnDestroy();
                         DAZMorphMgr.singleton.cache.Clear();
+                        ImageLoadingMgr.singleton.ClearCache();
 
                         GC.Collect();
                         Resources.UnloadUnusedAssets();

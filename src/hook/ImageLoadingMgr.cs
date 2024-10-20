@@ -1,6 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using System.IO;
+using GPUTools.Skinner.Scripts.Kernels;
+using SimpleJSON;
 using UnityEngine;
+using Valve.Newtonsoft.Json.Linq;
 namespace var_browser
 {
     /// <summary>
@@ -21,6 +25,10 @@ namespace var_browser
         }
 
         Dictionary<string, Texture2D> cache = new Dictionary<string, Texture2D>();
+        public void ClearCache()
+        {
+            cache.Clear();
+        }
         void RegisterTexture(string path, Texture2D tex)
         {
             if (string.IsNullOrEmpty(path)) return;
@@ -28,21 +36,37 @@ namespace var_browser
                 return;
             if (tex == null)
                 return;
+            //LogUtil.Log("RegisterTexture:" + path);
             cache.Add(path, tex);
         }
         public List<ImageRequest> requests = new List<ImageRequest>();
         public void DoCallback(ImageLoaderThreaded.QueuedImage qi)
         {
-            if (qi.rawImageToLoad != null)
+            try
             {
-                qi.rawImageToLoad.texture = qi.tex;
-            }
+                if (qi.rawImageToLoad != null)
+                {
+                    qi.rawImageToLoad.texture = qi.tex;
+                }
 
-            if (qi.callback != null)
-            {
-                qi.callback(qi);
-                qi.callback = null;
+                if (qi.callback != null)
+                {
+                    qi.callback(qi);
+                    qi.callback = null;
+                }
             }
+            catch(System.Exception ex)
+            {
+                LogUtil.LogError("DoCallback "+qi.imgPath+" "+ex.ToString());
+            }
+        }
+        //不能立刻调用。这里延迟一帧
+        //比如MacGruber.PostMagic立刻完成，这个时候还没完成初始化
+        WaitForEndOfFrame waitForEndOfFrame= new WaitForEndOfFrame();
+        IEnumerator DelayDoCallback(ImageLoaderThreaded.QueuedImage qi)
+        {
+            yield return waitForEndOfFrame;
+            DoCallback(qi);
         }
 
         public bool Request(ImageLoaderThreaded.QueuedImage qi)
@@ -51,84 +75,74 @@ namespace var_browser
             var imgPath = qi.imgPath;
             if (string.IsNullOrEmpty(imgPath)) return false;
 
-            int width = qi.width;
-            int height = qi.height;
 
-            GetResizedSize(ref width, ref height);
-
-            var diskCachePath = GetDiskCachePath(qi, width, height);
+            var diskCachePath = GetDiskCachePath(qi);
 
             if (string.IsNullOrEmpty(diskCachePath)) return false;
 
-            LogUtil.Log("request img:"+ diskCachePath);
+            //LogUtil.Log("request img:"+ diskCachePath);
 
             if (cache.ContainsKey(diskCachePath))
             {
                 LogUtil.Log("request use mem cache:" + diskCachePath);
                 qi.tex = cache[diskCachePath];
-                DoCallback(qi);
+                //DoCallback(qi);
+                Messager.singleton.StartCoroutine(DelayDoCallback(qi));
                 return true;
             }
-            //var thumbnail = GetDiskCachePath(qi,qi.width,qi.height);
-            var thumbnailPath = diskCachePath + ".DXT1";
-            if (File.Exists(thumbnailPath))
+            var metaPath = diskCachePath + ".meta";
+            int width = 0;
+            int height = 0;
+            TextureFormat textureFormat=TextureFormat.DXT1;
+            if (File.Exists(metaPath))
             {
-                LogUtil.Log("request use disk cache:" + thumbnailPath);
-
-                var bytes = File.ReadAllBytes(thumbnailPath);
-                LogUtil.Log("load bytes:" + bytes.Length);
-                Texture2D tex = new Texture2D(qi.width, qi.height, TextureFormat.DXT1, false);
-                bool success = true;
-                try
+                var jsonString = File.ReadAllText(metaPath);
+                JSONNode jSONNode = JSON.Parse(jsonString);
+                JSONClass asObject = jSONNode.AsObject;
+                if (asObject != null)
                 {
-                    tex.LoadRawTextureData(bytes);
+                    if (asObject["width"] != null)
+                        width = asObject["width"].AsInt;
+                    if (asObject["height"] != null)
+                        height = asObject["height"].AsInt;
+                    if (asObject["format"] != null)
+                        textureFormat = (TextureFormat)System.Enum.Parse(typeof(TextureFormat), asObject["format"]);
                 }
-                catch
-                {
-                    success = false;
-                    LogUtil.LogError("request load disk cache fail:" + thumbnailPath);
-                }
-                if (success)
-                {
-                    tex.Apply();
-                    qi.tex = tex;
 
-                    RegisterTexture(diskCachePath, tex);
+                GetResizedSize(ref width, ref height);
 
-                    DoCallback(qi);
-                    return true;
+                var realDiskCachePath = GetRealDiskCachePath(qi, width, height);
+                if (File.Exists(realDiskCachePath))
+                {
+                    LogUtil.Log("request use disk cache:" + realDiskCachePath);
+                    var bytes = File.ReadAllBytes(realDiskCachePath);
+                    Texture2D tex = new Texture2D(width, height, textureFormat, false);
+                    bool success = true;
+                    try
+                    {
+                        tex.LoadRawTextureData(bytes);
+                    }
+                    catch (System.Exception ex)
+                    {
+                        success = false;
+                        LogUtil.LogError("request load disk cache fail:" + realDiskCachePath + " " + ex.ToString());
+                        File.Delete(realDiskCachePath);
+                    }
+                    if (success)
+                    {
+                        tex.Apply();
+                        qi.tex = tex;
+
+                        RegisterTexture(diskCachePath, tex);
+
+                        //DoCallback(qi);
+                Messager.singleton.StartCoroutine(DelayDoCallback(qi));
+                        return true;
+                    }
                 }
             }
-            else if(File.Exists(diskCachePath + ".DXT5"))
-            {
-                thumbnailPath = diskCachePath + ".DXT5";
-                LogUtil.Log("request use disk cache:" + thumbnailPath);
 
-                var bytes = File.ReadAllBytes(thumbnailPath);
-                LogUtil.Log("load bytes:" + bytes.Length);
-                Texture2D tex = new Texture2D(qi.width, qi.height, TextureFormat.DXT5, false);
-                bool success = true;
-                try
-                {
-                    tex.LoadRawTextureData(bytes);
-                }
-                catch
-                {
-                    success = false;
-                    LogUtil.LogError("request load disk cache fail:" + thumbnailPath);
-                }
-                if (success)
-                {
-                    tex.Apply();
-                    qi.tex = tex;
-
-                    RegisterTexture(diskCachePath, tex);
-
-                    DoCallback(qi);
-                    return true;
-                }
-            }
-            LogUtil.Log("request not use cache:" + thumbnailPath);
+            LogUtil.Log("request not use cache:" + diskCachePath);
 
             return false;
         }
@@ -143,7 +157,7 @@ namespace var_browser
         }
         public Texture2D GetTexture2DFromRenderTexture(RenderTexture rTex, TextureFormat format)
         {
-            Texture2D texture2D = new Texture2D(rTex.width, rTex.height, format, false);
+            Texture2D texture2D = new Texture2D(rTex.width, rTex.height, format, false,false);
             RenderTexture.active = rTex;
 
             texture2D.ReadPixels(new Rect(0, 0, rTex.width, rTex.height), 0, 0);
@@ -172,14 +186,15 @@ namespace var_browser
             {
                 localFormat = TextureFormat.DXT1;
             }
-            string ext = localFormat == TextureFormat.DXT1 ? ".DXT1" : ".DXT5";
+            //string ext = localFormat == TextureFormat.DXT1 ? ".DXT1" : ".DXT5";
 
             int width = qi.tex.width;
             int height = qi.tex.height;
 
             GetResizedSize(ref width, ref height);
 
-            var diskCachePath = GetDiskCachePath(qi, width, height);
+            var diskCachePath = GetDiskCachePath(qi);
+            var realDiskCachePath = GetRealDiskCachePath(qi,width,height);
 
             Texture2D resultTexture = null;
             //不仅需要path
@@ -192,13 +207,13 @@ namespace var_browser
                 return resultTexture;
             }
 
-            var thumbnailPath = diskCachePath + ext;
-            if (File.Exists(thumbnailPath))
+            //var thumbnailPath = diskCachePath + ext
+            if (File.Exists(realDiskCachePath))
             {
-                LogUtil.Log("resize use disk cache:" + thumbnailPath);
-                var bytes = File.ReadAllBytes(thumbnailPath);
+                LogUtil.Log("resize use disk cache:" + realDiskCachePath);
+                var bytes = File.ReadAllBytes(realDiskCachePath);
 
-                resultTexture = new Texture2D(width, height, localFormat, false);
+                resultTexture = new Texture2D(width, height, localFormat, false,false);
                 resultTexture.LoadRawTextureData(bytes);
                 resultTexture.Apply();
                 RegisterTexture(diskCachePath, resultTexture);
@@ -206,42 +221,52 @@ namespace var_browser
             }
 
 
-            LogUtil.Log("resize generate cache:" + thumbnailPath);
+            LogUtil.Log("resize generate cache:" + realDiskCachePath);
 
-            var tempTexture = new RenderTexture(width, height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Default);
+            
+            var tempTexture = RenderTexture.GetTemporary(width, height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Default);
 
             Graphics.SetRenderTarget(tempTexture);
             GL.PushMatrix();
             GL.LoadPixelMatrix(0, width, height, 0);
+            //rt会复用，所以一定要先清理
+            GL.Clear(true, true, Color.clear);
             Graphics.DrawTexture(new Rect(0, 0, width, height), qi.tex);
             GL.PopMatrix();
             Graphics.SetRenderTarget(null);
 
             TextureFormat format= qi.tex.format;
             if (format == TextureFormat.DXT1)
-            {
                 format = TextureFormat.RGB24;
-            }
             else if (format == TextureFormat.DXT5)
-            {
                 format = TextureFormat.RGBA32;
-            }
-            resultTexture = new Texture2D(width, height, format, false);
+
+            resultTexture = new Texture2D(width, height, format, false, false);
             RenderTexture.active = tempTexture;
             resultTexture.ReadPixels(new Rect(0, 0, width, height), 0, 0);
             resultTexture.Apply();
             RenderTexture.active = null;
             resultTexture.Compress(true);
 
+            RenderTexture.ReleaseTemporary(tempTexture);
+
             LogUtil.Log(string.Format("convert {0}({1},{2})mip:{6}->{3}({4},{5})mip:{7}", 
                 qi.tex.format, qi.tex.width, qi.tex.height, 
                 resultTexture.format, width, height,qi.tex.mipmapCount, resultTexture.mipmapCount));
 
-            //更好的做法是encode成dx格式
             byte[] texBytes = resultTexture.GetRawTextureData();
-            File.WriteAllBytes(thumbnailPath, texBytes);
+            File.WriteAllBytes(realDiskCachePath, texBytes);
 
-            resultTexture.Apply();
+            JSONClass jSONClass = new JSONClass();
+            jSONClass["type"] = "image";
+            //这里记录原始的贴图大小
+            jSONClass["width"].AsInt = qi.tex.width;
+            jSONClass["height"].AsInt = qi.tex.height;
+            jSONClass["format"] = resultTexture.format.ToString();
+            string contents = jSONClass.ToString(string.Empty);
+            File.WriteAllText(diskCachePath + ".meta", contents);
+
+
             RegisterTexture(diskCachePath, resultTexture);
 
             UnityEngine.Object.Destroy(qi.tex);
@@ -261,7 +286,7 @@ namespace var_browser
             }
         }
 
-        protected string GetDiskCachePath(ImageLoaderThreaded.QueuedImage qi,int width,int height)
+        protected string GetDiskCachePath(ImageLoaderThreaded.QueuedImage qi)
         {
             var imgPath = qi.imgPath;
 
@@ -277,18 +302,73 @@ namespace var_browser
             if (fileEntry != null && textureCacheDir != null)
             {
                 string text = fileEntry.Size.ToString();
-                string text2 = fileEntry.LastWriteTime.ToFileTime().ToString();
                 string text3 = textureCacheDir + "/";
                 string fileName = Path.GetFileName(imgPath);
                 fileName = fileName.Replace('.', '_');
-                result = text3 + fileName + "_" + text + "_" + text2 + "_" + GetDiskCacheSignature(qi,width,height);
+                //不加入时间戳，有一定误差
+                result = text3 + fileName + "_" + text + "_" + GetDiskCacheSignature(qi);
             }
             return result;
         }
 
-        protected string GetDiskCacheSignature(ImageLoaderThreaded.QueuedImage qi,int width,int height)
+        protected string GetDiskCacheSignature(ImageLoaderThreaded.QueuedImage qi)
         {
-            string text = (width + "_" + height);
+            string text = "";// (width + "_" + height);
+            if (qi.compress)
+            {
+                text += "_C";
+            }
+            if (qi.linear)
+            {
+                text += "_L";
+            }
+            if (qi.isNormalMap)
+            {
+                text += "_N";
+            }
+            if (qi.createAlphaFromGrayscale)
+            {
+                text += "_A";
+            }
+            if (qi.createNormalFromBump)
+            {
+                text = text + "_BN" + qi.bumpStrength;
+            }
+            if (qi.invert)
+            {
+                text += "_I";
+            }
+            return text;
+        }
+
+        protected string GetRealDiskCachePath(ImageLoaderThreaded.QueuedImage qi, int width, int height)
+        {
+            var imgPath = qi.imgPath;
+
+            string result = null;
+            var fileEntry = MVR.FileManagement.FileManager.GetFileEntry(imgPath);
+
+            var textureCacheDir = "Cache/var_browser_cache";
+            if (!Directory.Exists(textureCacheDir))
+            {
+                Directory.CreateDirectory(textureCacheDir);
+            }
+
+            if (fileEntry != null && textureCacheDir != null)
+            {
+                string text = fileEntry.Size.ToString();
+                string text3 = textureCacheDir + "/";
+                string fileName = Path.GetFileName(imgPath);
+                fileName = fileName.Replace('.', '_');
+                //不加入时间戳，有一定误差
+                //有一些纯数字的是不是要特殊处理一下
+                result = text3 + fileName + "_" + text + "_" + GetRealDiskCacheSignature(qi,width,height);
+            }
+            return result;
+        }
+        protected string GetRealDiskCacheSignature(ImageLoaderThreaded.QueuedImage qi,int width,int height)
+        {
+            string text =  (width + "_" + height);
             if (qi.compress)
             {
                 text += "_C";

@@ -6,7 +6,13 @@ namespace var_browser
 {
     class Messager : MonoBehaviour
     {
+        public static Messager singleton;
         public GameObject target;
+
+        void Awake()
+        {
+            singleton = this;
+        }
 
         void Invoke(string msg)
         {
