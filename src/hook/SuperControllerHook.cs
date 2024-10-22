@@ -65,7 +65,7 @@ namespace var_browser
         [HarmonyPatch(typeof(ImageLoaderThreaded), "ProcessImageImmediate", new Type[] { typeof(ImageLoaderThreaded.QueuedImage) })]
         public static void PreProcessImageImmediate(ImageLoaderThreaded __instance, ImageLoaderThreaded.QueuedImage qi)
         {
-            if (!Settings.Instance.UseNewCahe.Value) return;
+            if (!Settings.Instance.ReduceTextureSize.Value) return;
             if (string.IsNullOrEmpty(qi.imgPath)) return;
             if (qi.textureFormat != TextureFormat.DXT1
                 && qi.textureFormat != TextureFormat.DXT5
@@ -88,7 +88,7 @@ namespace var_browser
         [HarmonyPatch(typeof(ImageLoaderThreaded), "QueueThumbnail", new Type[] { typeof(ImageLoaderThreaded.QueuedImage) })]
         public static void PostQueueThumbnail(ImageLoaderThreaded __instance, ImageLoaderThreaded.QueuedImage qi)
         {
-            if (!Settings.Instance.UseNewCahe.Value) return;
+            if (!Settings.Instance.ReduceTextureSize.Value) return;
             if (string.IsNullOrEmpty(qi.imgPath)) return;
 
             if (qi.imgPath.EndsWith(".jpg")) qi.textureFormat = TextureFormat.RGB24;
@@ -116,9 +116,11 @@ namespace var_browser
                         queuedImagesListCache.Add(item);
                     }
                 }
-                foreach(var item in queuedImagesListCache)
+                //移除最后一个
+                int cnt = queuedImagesListCache.Count;
+                if (cnt > 0)
                 {
-                    queuedImages.Remove(item);
+                    queuedImages.Remove(queuedImagesListCache[cnt-1]);
                 }
                 return;
             }
@@ -129,7 +131,7 @@ namespace var_browser
         [HarmonyPatch(typeof(ImageLoaderThreaded), "QueueThumbnailImmediate", new Type[] { typeof(ImageLoaderThreaded.QueuedImage) })]
         public static void PostQueueThumbnailImmediate(ImageLoaderThreaded __instance, ImageLoaderThreaded.QueuedImage qi)
         {
-            if (!Settings.Instance.UseNewCahe.Value) return;
+            if (!Settings.Instance.ReduceTextureSize.Value) return;
             if (string.IsNullOrEmpty(qi.imgPath)) return;
             if (qi.textureFormat != TextureFormat.DXT1
                 && qi.textureFormat != TextureFormat.DXT5
@@ -154,9 +156,11 @@ namespace var_browser
                         queuedImagesListCache.Add(item);
                     }
                 }
-                foreach (var item in queuedImagesListCache)
+                //移除第一个
+                int cnt = queuedImagesListCache.Count;
+                if (cnt > 0)
                 {
-                    queuedImages.Remove(item);
+                    queuedImages.Remove(queuedImagesListCache[0]);
                 }
                 return;
             }
@@ -165,7 +169,7 @@ namespace var_browser
         [HarmonyPatch(typeof(ImageLoaderThreaded), "QueueImage", new Type[] { typeof(ImageLoaderThreaded.QueuedImage) })]
         public static void PostQueueImage(ImageLoaderThreaded __instance, ImageLoaderThreaded.QueuedImage qi)
         {
-            if (!Settings.Instance.UseNewCahe.Value) return;
+            if (!Settings.Instance.ReduceTextureSize.Value) return;
             if (string.IsNullOrEmpty(qi.imgPath)) return;
 
 
@@ -190,23 +194,21 @@ namespace var_browser
                     if (item.imgPath == qi.imgPath)
                     {
                         queuedImagesListCache.Add(item);
+                        break;
                     }
                 }
-                foreach (var item in queuedImagesListCache)
+                int cnt = queuedImagesListCache.Count;
+                if (cnt > 0)
                 {
-                    queuedImages.Remove(item);
+                    queuedImages.Remove(queuedImagesListCache[cnt-1]);
+
+                    var field2 = Traverse.Create(__instance).Field("numRealQueuedImages");
+                    var numRealQueuedImages = (int)field2.GetValue();
+                    field2.SetValue(numRealQueuedImages - 1);
+                    var field3 = Traverse.Create(__instance).Field("progressMax");
+                    var progressMax = (int)field3.GetValue();
+                    field3.SetValue(progressMax - 1);
                 }
-
-                var field2 = Traverse.Create(__instance).Field("numRealQueuedImages");
-                var numRealQueuedImages = (int)field2.GetValue();
-                field2.SetValue(numRealQueuedImages - 1);
-                //__instance.numRealQueuedImages++;
-                var field3 = Traverse.Create(__instance).Field("progressMax");
-                var progressMax = (int)field3.GetValue();
-                field3.SetValue(progressMax - 1);
-                //__instance.progressMax++;
-
-                return;
             }
         }
         //在callback之前就会放入cache，所以需要提前一步设置skipCache
@@ -214,7 +216,7 @@ namespace var_browser
         [HarmonyPatch(typeof(ImageLoaderThreaded.QueuedImage), "Finish")]
         public static void PostFinish_QueuedImage(ImageLoaderThreaded.QueuedImage __instance)
         {
-            if (!Settings.Instance.UseNewCahe.Value) return;
+            if (!Settings.Instance.ReduceTextureSize.Value) return;
 
             if (string.IsNullOrEmpty(__instance.imgPath)) return;
             if (__instance.tex != null)

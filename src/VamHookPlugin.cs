@@ -398,7 +398,7 @@ namespace var_browser
                         Resources.UnloadUnusedAssets();
                     }
                     GUILayout.EndHorizontal();
-                    Settings.Instance.UseNewCahe.Value = GUILayout.Toggle(Settings.Instance.UseNewCahe.Value, "Use New Cache");
+                    Settings.Instance.ReduceTextureSize.Value = GUILayout.Toggle(Settings.Instance.ReduceTextureSize.Value, "Reduce Texture Size");
 
                     //if (GUILayout.Button("HeapDump"))
                     //{
