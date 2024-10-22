@@ -26,7 +26,8 @@ namespace var_browser
         public ConfigEntry<bool> UseNewCahe;
         public ConfigEntry<int> ThumbnailSize;
         public ConfigEntry<int> MaxTextureSize;
-
+        public ConfigEntry<bool> isVAMCacheDir;//是否使用vam的缓存目录 
+        
         internal static void Init(ConfigFile config)
         {
             Instance.Load(config);
@@ -44,6 +45,8 @@ namespace var_browser
             ThumbnailSize = config.Bind<int>("Settings", "ThumbnailSize", 256, "Thumbnail size.");
             UseNewCahe = config.Bind<bool>("Optimze", "UseNewCahe", false, "use new cache for asset.");
             MaxTextureSize = config.Bind<int>("Optimze", "MaxTextureSize", 1024, "max size for texture.");
+            //是否使用vam的缓存目录
+            isVAMCacheDir = config.Bind<bool>("Optimze", "isVAMCacheDir", false, "Do you want to use VAM cache directory.");
         }
     }
 }
