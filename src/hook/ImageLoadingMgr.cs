@@ -281,12 +281,14 @@ namespace var_browser
 
             string result = null;
             var fileEntry =MVR.FileManagement.FileManager.GetFileEntry(imgPath);
-
-            var textureCacheDir = "Cache/var_browser_cache";
-            if (!Directory.Exists(textureCacheDir))
-            {
-                Directory.CreateDirectory(textureCacheDir);
-            }
+            
+            //在内置的缓存目录新增新版缓存文件夹
+            string textureCacheDir = VamHookPlugin.textureCacheDir;
+            //var textureCacheDir = "Cache/var_browser_cache";
+            //if (!Directory.Exists(textureCacheDir))
+            //{
+            //    Directory.CreateDirectory(textureCacheDir);
+            //}
 
             if (fileEntry != null && textureCacheDir != null)
             {
@@ -336,12 +338,14 @@ namespace var_browser
 
             string result = null;
             var fileEntry = MVR.FileManagement.FileManager.GetFileEntry(imgPath);
-
-            var textureCacheDir = "Cache/var_browser_cache";
-            if (!Directory.Exists(textureCacheDir))
-            {
-                Directory.CreateDirectory(textureCacheDir);
-            }
+            
+            //在内置的缓存目录新增新版缓存文件夹
+            string textureCacheDir = VamHookPlugin.textureCacheDir;
+            //var textureCacheDir = "Cache/var_browser_cache";
+            //if (!Directory.Exists(textureCacheDir))
+            //{
+            //    Directory.CreateDirectory(textureCacheDir);
+            //}
 
             if (fileEntry != null && textureCacheDir != null)
             {
