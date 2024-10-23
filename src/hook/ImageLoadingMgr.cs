@@ -229,8 +229,8 @@ namespace var_browser
                 format = TextureFormat.RGB24;
             else if (format == TextureFormat.DXT5)
                 format = TextureFormat.RGBA32;
-
-            resultTexture = new Texture2D(width, height, format, false, qi.linear);
+            //这里linear不需要设置？
+            resultTexture = new Texture2D(width, height, format, false,false);
             RenderTexture.active = tempTexture;
             resultTexture.ReadPixels(new Rect(0, 0, width, height), 0, 0);
             resultTexture.Apply();
