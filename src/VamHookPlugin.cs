@@ -238,20 +238,12 @@ namespace var_browser
         FileManager m_FileManager;
         FileBrowser m_FileBrowser;
 	
-	public static string textureCacheDir;
         void CreateHubBrowse()
         {
             LogUtil.LogWarning("var browser CreateHubBrowse");
             if (m_HubBrowse == null)
             {
-            	//判断获取缓存路径
-		textureCacheDir = Settings.Instance.isVAMCacheDir.Value ? MVR.FileManagement.CacheManager.GetCacheDir() + "\\var_browser_cache" : "Cache/var_browser_cache";
-		if(!Directory.Exists(textureCacheDir))
-		{
-			Directory.CreateDirectory(textureCacheDir);
-		}
-		LogUtil.Log("Cache Dir:" + textureCacheDir);
-    
+
                 var child = Tools.AddChild(this.gameObject);
                 child.name = "VarBrowser_HubBrowse";
                 m_HubBrowse = child.AddComponent<HubBrowse>();

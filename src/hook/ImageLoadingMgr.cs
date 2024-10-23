@@ -76,7 +76,7 @@ namespace var_browser
             if (string.IsNullOrEmpty(imgPath)) return false;
 
 
-            var diskCachePath = GetDiskCachePath(qi);
+            var diskCachePath = GetDiskCachePath(qi,false,0,0);
 
             if (string.IsNullOrEmpty(diskCachePath)) return false;
 
@@ -111,7 +111,7 @@ namespace var_browser
 
                 GetResizedSize(ref width, ref height);
 
-                var realDiskCachePath = GetRealDiskCachePath(qi, width, height);
+                var realDiskCachePath = GetDiskCachePath(qi, true,width, height);
                 if (File.Exists(realDiskCachePath))
                 {
                     LogUtil.Log("request use disk cache:" + realDiskCachePath);
@@ -182,8 +182,8 @@ namespace var_browser
 
             GetResizedSize(ref width, ref height);
 
-            var diskCachePath = GetDiskCachePath(qi);
-            var realDiskCachePath = GetRealDiskCachePath(qi,width,height);
+            var diskCachePath = GetDiskCachePath(qi,false,0,0);
+            var realDiskCachePath = GetDiskCachePath(qi,true,width,height);
 
             Texture2D resultTexture = null;
             //不仅需要path
@@ -275,78 +275,19 @@ namespace var_browser
             }
         }
 
-        protected string GetDiskCachePath(ImageLoaderThreaded.QueuedImage qi)
-        {
-            var imgPath = qi.imgPath;
-
-            string result = null;
-            var fileEntry =MVR.FileManagement.FileManager.GetFileEntry(imgPath);
-            
-            //在内置的缓存目录新增新版缓存文件夹
-            string textureCacheDir = VamHookPlugin.textureCacheDir;
-            //var textureCacheDir = "Cache/var_browser_cache";
-            //if (!Directory.Exists(textureCacheDir))
-            //{
-            //    Directory.CreateDirectory(textureCacheDir);
-            //}
-
-            if (fileEntry != null && textureCacheDir != null)
-            {
-                string text = fileEntry.Size.ToString();
-                string text3 = textureCacheDir + "/";
-                string fileName = Path.GetFileName(imgPath);
-                fileName = fileName.Replace('.', '_');
-                //不加入时间戳，有一定误差
-                result = text3 + fileName + "_" + text + "_" + GetDiskCacheSignature(qi);
-            }
-            return result;
-        }
-
-        protected string GetDiskCacheSignature(ImageLoaderThreaded.QueuedImage qi)
-        {
-            string text = "";// (width + "_" + height);
-            if (qi.compress)
-            {
-                text += "_C";
-            }
-            if (qi.linear)
-            {
-                text += "_L";
-            }
-            if (qi.isNormalMap)
-            {
-                text += "_N";
-            }
-            if (qi.createAlphaFromGrayscale)
-            {
-                text += "_A";
-            }
-            if (qi.createNormalFromBump)
-            {
-                text = text + "_BN" + qi.bumpStrength;
-            }
-            if (qi.invert)
-            {
-                text += "_I";
-            }
-            return text;
-        }
-
-        protected string GetRealDiskCachePath(ImageLoaderThreaded.QueuedImage qi, int width, int height)
+        protected string GetDiskCachePath(ImageLoaderThreaded.QueuedImage qi, bool useSize, int width, int height)
         {
             var imgPath = qi.imgPath;
 
             string result = null;
             var fileEntry = MVR.FileManagement.FileManager.GetFileEntry(imgPath);
-            
-            //在内置的缓存目录新增新版缓存文件夹
-            string textureCacheDir = VamHookPlugin.textureCacheDir;
-            //var textureCacheDir = "Cache/var_browser_cache";
-            //if (!Directory.Exists(textureCacheDir))
-            //{
-            //    Directory.CreateDirectory(textureCacheDir);
-            //}
 
+            //在内置的缓存目录新增新版缓存文件夹
+            var textureCacheDir = MVR.FileManagement.CacheManager.GetCacheDir() + "\\var_browser_cache";
+            if (!Directory.Exists(textureCacheDir))
+            {
+                Directory.CreateDirectory(textureCacheDir);
+            }
             if (fileEntry != null && textureCacheDir != null)
             {
                 string text = fileEntry.Size.ToString();
@@ -355,13 +296,13 @@ namespace var_browser
                 fileName = fileName.Replace('.', '_');
                 //不加入时间戳，有一定误差
                 //有一些纯数字的是不是要特殊处理一下
-                result = text3 + fileName + "_" + text + "_" + GetRealDiskCacheSignature(qi,width,height);
+                result = text3 + fileName + "_" + text + "_" + GetDiskCacheSignature(qi, useSize,width, height);
             }
             return result;
         }
-        protected string GetRealDiskCacheSignature(ImageLoaderThreaded.QueuedImage qi,int width,int height)
+        protected string GetDiskCacheSignature(ImageLoaderThreaded.QueuedImage qi, bool useSize, int width,int height)
         {
-            string text =  (width + "_" + height);
+            string text = useSize ?(width + "_" + height):"";
             if (qi.compress)
             {
                 text += "_C";
