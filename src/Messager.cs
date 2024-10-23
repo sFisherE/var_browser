@@ -12,6 +12,7 @@ namespace var_browser
         void Awake()
         {
             singleton = this;
+            DontDestroyOnLoad(this.gameObject);
         }
 
         void Invoke(string msg)
