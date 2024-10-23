@@ -116,7 +116,7 @@ namespace var_browser
                 {
                     LogUtil.Log("request use disk cache:" + realDiskCachePath);
                     var bytes = File.ReadAllBytes(realDiskCachePath);
-                    Texture2D tex = new Texture2D(width, height, textureFormat, false);
+                    Texture2D tex = new Texture2D(width, height, textureFormat, false,qi.linear);
                     bool success = true;
                     try
                     {
@@ -154,17 +154,6 @@ namespace var_browser
                 power <<= 1;
             }
             return power;
-        }
-        public Texture2D GetTexture2DFromRenderTexture(RenderTexture rTex, TextureFormat format)
-        {
-            Texture2D texture2D = new Texture2D(rTex.width, rTex.height, format, false,false);
-            RenderTexture.active = rTex;
-
-            texture2D.ReadPixels(new Rect(0, 0, rTex.width, rTex.height), 0, 0);
-            texture2D.Apply();
-            RenderTexture.active = null;
-            texture2D.Compress(true);
-            return texture2D;
         }
         /// <summary>
         /// 将加载完成的贴图进行resize、compress，然后存储在本地
@@ -213,7 +202,7 @@ namespace var_browser
                 LogUtil.Log("resize use disk cache:" + realDiskCachePath);
                 var bytes = File.ReadAllBytes(realDiskCachePath);
 
-                resultTexture = new Texture2D(width, height, localFormat, false,false);
+                resultTexture = new Texture2D(width, height, localFormat, false, qi.linear);
                 resultTexture.LoadRawTextureData(bytes);
                 resultTexture.Apply();
                 RegisterTexture(diskCachePath, resultTexture);
@@ -241,7 +230,7 @@ namespace var_browser
             else if (format == TextureFormat.DXT5)
                 format = TextureFormat.RGBA32;
 
-            resultTexture = new Texture2D(width, height, format, false, false);
+            resultTexture = new Texture2D(width, height, format, false, qi.linear);
             RenderTexture.active = tempTexture;
             resultTexture.ReadPixels(new Rect(0, 0, width, height), 0, 0);
             resultTexture.Apply();
