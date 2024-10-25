@@ -135,8 +135,7 @@ namespace var_browser
 
                         RegisterTexture(diskCachePath, tex);
 
-                        //DoCallback(qi);
-                Messager.singleton.StartCoroutine(DelayDoCallback(qi));
+                        Messager.singleton.StartCoroutine(DelayDoCallback(qi));
                         return true;
                     }
                 }
@@ -154,6 +153,34 @@ namespace var_browser
                 power <<= 1;
             }
             return power;
+        }
+        // http://www.opengl.org/registry/specs/EXT/framebuffer_sRGB.txt
+        // http://www.opengl.org/registry/specs/EXT/texture_sRGB_decode.txt
+        float LINEAR_TO_GAMMA_POW = 0.45454545454545F;
+        float GAMMA_TO_LINEAR_POW = 2.2F;
+        float GammaToLinearSpace(float value)
+        {
+            if (value <= 0.04045F)
+                return value / 12.92F;
+            else if (value < 1.0F)
+                return Mathf.Pow((value + 0.055F) / 1.055F, 2.4F);
+            else if (value == 1.0F)
+                return 1.0f;
+            else
+                return Mathf.Pow(value, GAMMA_TO_LINEAR_POW);
+        }
+        float LinearToGammaSpace(float value)
+        {
+            if (value <= 0.0F)
+                return 0.0F;
+            else if (value <= 0.0031308F)
+                return 12.92F * value;
+            else if (value < 1.0F)
+                return 1.055F * Mathf.Pow(value, 0.4166667F) - 0.055F;
+            else if (value == 1.0F)
+                return 1.0f;
+            else
+                return Mathf.Pow(value, LINEAR_TO_GAMMA_POW);
         }
         /// <summary>
         /// 将加载完成的贴图进行resize、compress，然后存储在本地
@@ -212,7 +239,7 @@ namespace var_browser
 
             LogUtil.Log("resize generate cache:" + realDiskCachePath);
 
-            
+            //一张图片是否是linear，会影响qi.tex的显示效果
             var tempTexture = RenderTexture.GetTemporary(width, height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Default);
 
             Graphics.SetRenderTarget(tempTexture);
@@ -229,12 +256,31 @@ namespace var_browser
                 format = TextureFormat.RGB24;
             else if (format == TextureFormat.DXT5)
                 format = TextureFormat.RGBA32;
-            //这里linear不需要设置？
-            resultTexture = new Texture2D(width, height, format, false,false);
+
+            resultTexture = new Texture2D(width, height, format, false,qi.linear);
             RenderTexture.active = tempTexture;
             resultTexture.ReadPixels(new Rect(0, 0, width, height), 0, 0);
             resultTexture.Apply();
             RenderTexture.active = null;
+
+            //如果原图是linear的，需要反向再转换一次颜色
+            if (qi.linear)
+            {
+                var pixels = resultTexture.GetPixels();
+                for(int i = 0; i < pixels.Length; i++)
+                {
+                    var col = pixels[i];
+                    float r = col.r;
+                    float g = col.g;
+                    float b = col.b;
+                    r = GammaToLinearSpace(r);
+                    g = GammaToLinearSpace(g);
+                    b = GammaToLinearSpace(b);
+                    pixels[i] = new Color(r, g, b,col.a);
+                }
+                resultTexture.SetPixels(pixels);
+            }
+
             resultTexture.Compress(true);
 
             RenderTexture.ReleaseTemporary(tempTexture);
