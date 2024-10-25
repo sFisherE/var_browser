@@ -285,9 +285,10 @@ namespace var_browser
 
             RenderTexture.ReleaseTemporary(tempTexture);
 
-            LogUtil.Log(string.Format("convert {0}({1},{2})mip:{6}->{3}({4},{5})mip:{7}", 
-                qi.tex.format, qi.tex.width, qi.tex.height, 
-                resultTexture.format, width, height,qi.tex.mipmapCount, resultTexture.mipmapCount));
+            LogUtil.Log(string.Format("convert {0}:{1}({2},{3})mip:{4} isLinear:{5} -> {6}({7},{8})mip:{9}",
+                qi.imgPath,
+                qi.tex.format, qi.tex.width, qi.tex.height, qi.tex.mipmapCount, qi.linear,
+                resultTexture.format, width, height, resultTexture.mipmapCount));
 
             byte[] texBytes = resultTexture.GetRawTextureData();
             File.WriteAllBytes(realDiskCachePath, texBytes);
@@ -372,6 +373,10 @@ namespace var_browser
             if (qi.invert)
             {
                 text += "_I";
+            }
+            if (qi.isThumbnail)
+            {
+                text += "_T";
             }
             return text;
         }

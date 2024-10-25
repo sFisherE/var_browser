@@ -219,6 +219,11 @@ namespace var_browser
             if (!Settings.Instance.ReduceTextureSize.Value) return;
 
             if (string.IsNullOrEmpty(__instance.imgPath)) return;
+
+            //忽略hub browse
+            if (__instance.webRequest != null || __instance.useWebCache) return;
+            if (Regex.IsMatch(__instance.imgPath, "^http")) return;
+
             if (__instance.tex != null)
             {
                 if (__instance.tex.format == TextureFormat.DXT1
@@ -248,7 +253,7 @@ namespace var_browser
 
             if (DAZMorphMgr.singleton.cache.ContainsKey(path))
             {
-                Debug.Log("LoadDeltas use cache:"+path);
+                LogUtil.Log("LoadDeltas use cache:" + path);
                 __instance.deltas = DAZMorphMgr.singleton.cache[path];
                 return;
             }
