@@ -77,6 +77,8 @@ namespace var_browser
         IEnumerator DelayDoCallback(ImageLoaderThreaded.QueuedImage qi)
         {
             yield return waitForEndOfFrame;
+            //这里延迟2帧，只延迟一帧的话，decalmaker的逻辑时序会有问题。
+            yield return waitForEndOfFrame;
             DoCallback(qi);
         }
 
@@ -127,7 +129,7 @@ namespace var_browser
                     LogUtil.Log("request use disk cache:" + realDiskCachePath);
                     var bytes = File.ReadAllBytes(realDiskCachePath);
                     Texture2D tex = new Texture2D(width, height, textureFormat, false,qi.linear);
-                    tex.name = qi.cacheSignature;
+                    //tex.name = qi.cacheSignature;
                     bool success = true;
                     try
                     {
@@ -212,7 +214,7 @@ namespace var_browser
                 var bytes = File.ReadAllBytes(realDiskCachePath);
 
                 resultTexture = new Texture2D(width, height, localFormat, false, qi.linear);
-                resultTexture.name = qi.cacheSignature;
+                //resultTexture.name = qi.cacheSignature;
                 resultTexture.LoadRawTextureData(bytes);
                 resultTexture.Apply();
                 RegisterTexture(diskCachePath, resultTexture);
@@ -243,11 +245,12 @@ namespace var_browser
                 format = TextureFormat.RGBA32;
 
             resultTexture = new Texture2D(width, height, format, false, qi.linear);
-            resultTexture.name = qi.cacheSignature;
+            //resultTexture.name = qi.cacheSignature;
+            var previous = RenderTexture.active;
             RenderTexture.active = tempTexture;
             resultTexture.ReadPixels(new Rect(0, 0, width, height), 0, 0);
             resultTexture.Apply();
-            RenderTexture.active = null;
+            RenderTexture.active = previous;
 
             resultTexture.Compress(true);
 
