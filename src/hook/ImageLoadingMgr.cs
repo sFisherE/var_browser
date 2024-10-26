@@ -29,14 +29,25 @@ namespace var_browser
         {
             cache.Clear();
         }
+        public Texture2D GetTextureFromCache(string path)
+        {
+            if (cache.ContainsKey(path))
+            {
+                if (cache[path] != null)
+                    return cache[path];
+                cache.Remove(path);
+            }
+            return null;
+        }
         void RegisterTexture(string path, Texture2D tex)
         {
             if (string.IsNullOrEmpty(path)) return;
-            if (cache.ContainsKey(path))
+            if (cache.ContainsKey(path) && cache[path] != null)
                 return;
             if (tex == null)
                 return;
             //LogUtil.Log("RegisterTexture:" + path);
+            cache.Remove(path);
             cache.Add(path, tex);
         }
         public List<ImageRequest> requests = new List<ImageRequest>();
@@ -75,18 +86,17 @@ namespace var_browser
             var imgPath = qi.imgPath;
             if (string.IsNullOrEmpty(imgPath)) return false;
 
-
             var diskCachePath = GetDiskCachePath(qi,false,0,0);
 
             if (string.IsNullOrEmpty(diskCachePath)) return false;
 
             //LogUtil.Log("request img:"+ diskCachePath);
 
-            if (cache.ContainsKey(diskCachePath))
+            var cacheTexture = GetTextureFromCache(diskCachePath);
+            if (cacheTexture!=null)
             {
                 LogUtil.Log("request use mem cache:" + diskCachePath);
-                qi.tex = cache[diskCachePath];
-                //DoCallback(qi);
+                qi.tex = cacheTexture;
                 Messager.singleton.StartCoroutine(DelayDoCallback(qi));
                 return true;
             }
@@ -117,6 +127,7 @@ namespace var_browser
                     LogUtil.Log("request use disk cache:" + realDiskCachePath);
                     var bytes = File.ReadAllBytes(realDiskCachePath);
                     Texture2D tex = new Texture2D(width, height, textureFormat, false,qi.linear);
+                    tex.name = qi.cacheSignature;
                     bool success = true;
                     try
                     {
@@ -154,34 +165,6 @@ namespace var_browser
             }
             return power;
         }
-        // http://www.opengl.org/registry/specs/EXT/framebuffer_sRGB.txt
-        // http://www.opengl.org/registry/specs/EXT/texture_sRGB_decode.txt
-        float LINEAR_TO_GAMMA_POW = 0.45454545454545F;
-        float GAMMA_TO_LINEAR_POW = 2.2F;
-        float GammaToLinearSpace(float value)
-        {
-            if (value <= 0.04045F)
-                return value / 12.92F;
-            else if (value < 1.0F)
-                return Mathf.Pow((value + 0.055F) / 1.055F, 2.4F);
-            else if (value == 1.0F)
-                return 1.0f;
-            else
-                return Mathf.Pow(value, GAMMA_TO_LINEAR_POW);
-        }
-        float LinearToGammaSpace(float value)
-        {
-            if (value <= 0.0F)
-                return 0.0F;
-            else if (value <= 0.0031308F)
-                return 12.92F * value;
-            else if (value < 1.0F)
-                return 1.055F * Mathf.Pow(value, 0.4166667F) - 0.055F;
-            else if (value == 1.0F)
-                return 1.0f;
-            else
-                return Mathf.Pow(value, LINEAR_TO_GAMMA_POW);
-        }
         /// <summary>
         /// 将加载完成的贴图进行resize、compress，然后存储在本地
         /// </summary>
@@ -212,13 +195,12 @@ namespace var_browser
             var diskCachePath = GetDiskCachePath(qi,false,0,0);
             var realDiskCachePath = GetDiskCachePath(qi,true,width,height);
 
-            Texture2D resultTexture = null;
+            Texture2D resultTexture = GetTextureFromCache(diskCachePath);
             //不仅需要path
-            if (cache.ContainsKey(diskCachePath))
+            if (resultTexture!=null)
             {
                 LogUtil.Log("resize use mem cache:" + diskCachePath);
                 UnityEngine.Object.Destroy(qi.tex);
-                resultTexture = cache[diskCachePath];
                 qi.tex = resultTexture;
                 return resultTexture;
             }
@@ -230,6 +212,7 @@ namespace var_browser
                 var bytes = File.ReadAllBytes(realDiskCachePath);
 
                 resultTexture = new Texture2D(width, height, localFormat, false, qi.linear);
+                resultTexture.name = qi.cacheSignature;
                 resultTexture.LoadRawTextureData(bytes);
                 resultTexture.Apply();
                 RegisterTexture(diskCachePath, resultTexture);
@@ -240,14 +223,16 @@ namespace var_browser
             LogUtil.Log("resize generate cache:" + realDiskCachePath);
 
             //一张图片是否是linear，会影响qi.tex的显示效果
-            var tempTexture = RenderTexture.GetTemporary(width, height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Default);
+            var tempTexture = RenderTexture.GetTemporary(width, height, 0, RenderTextureFormat.ARGB32,
+                qi.linear ? RenderTextureReadWrite.Linear : RenderTextureReadWrite.sRGB);
 
             Graphics.SetRenderTarget(tempTexture);
             GL.PushMatrix();
             GL.LoadPixelMatrix(0, width, height, 0);
             //rt会复用，所以一定要先清理
             GL.Clear(true, true, Color.clear);
-            Graphics.DrawTexture(new Rect(0, 0, width, height), qi.tex);
+            Graphics.Blit(qi.tex, tempTexture);
+            //Graphics.DrawTexture(new Rect(0, 0, width, height), qi.tex);
             GL.PopMatrix();
             Graphics.SetRenderTarget(null);
 
@@ -257,29 +242,12 @@ namespace var_browser
             else if (format == TextureFormat.DXT5)
                 format = TextureFormat.RGBA32;
 
-            resultTexture = new Texture2D(width, height, format, false,qi.linear);
+            resultTexture = new Texture2D(width, height, format, false, qi.linear);
+            resultTexture.name = qi.cacheSignature;
             RenderTexture.active = tempTexture;
             resultTexture.ReadPixels(new Rect(0, 0, width, height), 0, 0);
             resultTexture.Apply();
             RenderTexture.active = null;
-
-            //如果原图是linear的，需要反向再转换一次颜色
-            if (qi.linear)
-            {
-                var pixels = resultTexture.GetPixels();
-                for(int i = 0; i < pixels.Length; i++)
-                {
-                    var col = pixels[i];
-                    float r = col.r;
-                    float g = col.g;
-                    float b = col.b;
-                    r = GammaToLinearSpace(r);
-                    g = GammaToLinearSpace(g);
-                    b = GammaToLinearSpace(b);
-                    pixels[i] = new Color(r, g, b,col.a);
-                }
-                resultTexture.SetPixels(pixels);
-            }
 
             resultTexture.Compress(true);
 
@@ -324,26 +292,28 @@ namespace var_browser
 
         protected string GetDiskCachePath(ImageLoaderThreaded.QueuedImage qi, bool useSize, int width, int height)
         {
-            var imgPath = qi.imgPath;
-
-            string result = null;
-            var fileEntry = MVR.FileManagement.FileManager.GetFileEntry(imgPath);
-
             //在内置的缓存目录新增新版缓存文件夹
             var textureCacheDir = MVR.FileManagement.CacheManager.GetCacheDir() + "\\var_browser_cache";
             if (!Directory.Exists(textureCacheDir))
             {
                 Directory.CreateDirectory(textureCacheDir);
             }
+
+            var imgPath = qi.imgPath;
+
+            string result = null;
+            var fileEntry = MVR.FileManagement.FileManager.GetFileEntry(imgPath);
+
             if (fileEntry != null && textureCacheDir != null)
             {
                 string text = fileEntry.Size.ToString();
-                string text3 = textureCacheDir + "/";
+                string basePath = textureCacheDir + "/";
                 string fileName = Path.GetFileName(imgPath);
                 fileName = fileName.Replace('.', '_');
                 //不加入时间戳，有一定误差
                 //有一些纯数字的是不是要特殊处理一下
-                result = text3 + fileName + "_" + text + "_" + GetDiskCacheSignature(qi, useSize,width, height);
+                var diskCacheSignature = fileName + "_" + text + "_" + GetDiskCacheSignature(qi, useSize, width, height);
+                result = basePath + diskCacheSignature;
             }
             return result;
         }
