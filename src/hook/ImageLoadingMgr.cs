@@ -295,12 +295,7 @@ namespace var_browser
 
         protected string GetDiskCachePath(ImageLoaderThreaded.QueuedImage qi, bool useSize, int width, int height)
         {
-            //在内置的缓存目录新增新版缓存文件夹
-            var textureCacheDir = MVR.FileManagement.CacheManager.GetCacheDir() + "\\var_browser_cache";
-            if (!Directory.Exists(textureCacheDir))
-            {
-                Directory.CreateDirectory(textureCacheDir);
-            }
+            var textureCacheDir = VamHookPlugin.GetCacheDir();
 
             var imgPath = qi.imgPath;
 

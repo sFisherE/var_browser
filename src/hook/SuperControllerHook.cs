@@ -281,6 +281,7 @@ namespace var_browser
                 }
             }
         }
+
     }
 
     //[HarmonyPatch(typeof(HairLODSettings), nameof(HairLODSettings.GetDencity))]
@@ -303,4 +304,51 @@ namespace var_browser
     //        __result = __result*5;
     //    }
     //}
+
+    class PatchAssetLoader
+    {
+        //[HarmonyPrefix]
+        //[HarmonyPatch(typeof(MeshVR.AssetLoader),"Start")]
+        //static bool Start(MeshVR.AssetLoader __instance)
+        //{
+        //    LogUtil.Log("PatchAssetLoader Start");
+        //    return false; // 阻止原始方法执行
+        //}
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(MeshVR.AssetLoader), "QueueLoadAssetBundleFromFile")]
+        static bool QueueLoadAssetBundleFromFile(MeshVR.AssetLoader.AssetBundleFromFileRequest abffr)
+        {
+            if (Settings.Instance.CacheAssetBundle.Value)
+            {
+                var_browser.CustomAssetLoader.QueueLoadAssetBundleFromFile(abffr);
+                return false; // 阻止原始方法执行
+            }
+            return true;
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(MeshVR.AssetLoader), "QueueLoadSceneIntoTransform")]
+        static bool QueueLoadSceneIntoTransform(MeshVR.AssetLoader.SceneLoadIntoTransformRequest slr)
+        {
+            if (Settings.Instance.CacheAssetBundle.Value)
+            {
+                var_browser.CustomAssetLoader.QueueLoadSceneIntoTransform(slr);
+                return false; // 阻止原始方法执行
+            }
+            return true;
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(MeshVR.AssetLoader), "DoneWithAssetBundleFromFile")]
+        static bool DoneWithAssetBundleFromFile(string path)
+        {
+            if (Settings.Instance.CacheAssetBundle.Value)
+            {
+                var_browser.CustomAssetLoader.DoneWithAssetBundleFromFile(path);
+                return false; // 阻止原始方法执行
+            }
+            return false;
+        }
+    }
+
 }

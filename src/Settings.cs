@@ -24,6 +24,7 @@ namespace var_browser
         public ConfigEntry<bool> PluginsAlwaysEnabled;
         public ConfigEntry<int> CodePage;
         public ConfigEntry<bool> ReduceTextureSize;
+        public ConfigEntry<bool> CacheAssetBundle;
         public ConfigEntry<int> ThumbnailSize;
         public ConfigEntry<int> MaxTextureSize;
         
@@ -45,6 +46,7 @@ namespace var_browser
             
             ReduceTextureSize = config.Bind<bool>("Optimze", "ReduceTextureSize", false, "reduce texture size.");
             MaxTextureSize = config.Bind<int>("Optimze", "MaxTextureSize", 1024, "max size for texture.");
+            CacheAssetBundle = config.Bind<bool>("Optimze", "CacheAssetBundle", true, "cache assetbundle.");
         }
     }
 }

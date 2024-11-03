@@ -24,6 +24,32 @@ namespace var_browser
 
         public static VamHookPlugin singleton;
 
+        static string cacheDir;
+        public static string GetCacheDir()
+        {
+            if (string.IsNullOrEmpty(cacheDir))
+            {
+                cacheDir = MVR.FileManagement.CacheManager.GetCacheDir() + "/var_browser_cache";
+                if (!Directory.Exists(cacheDir))
+                {
+                    Directory.CreateDirectory(cacheDir);
+                }
+            }
+            return cacheDir;
+        }
+        static string abCacheDir;
+        public static string GetAssetBundleCacheDir()
+        {
+            if (string.IsNullOrEmpty(abCacheDir))
+            {
+                abCacheDir = MVR.FileManagement.CacheManager.GetCacheDir() + "/var_browser_cache/ab";
+                if (!Directory.Exists(abCacheDir))
+                {
+                    Directory.CreateDirectory(abCacheDir);
+                }
+            }
+            return abCacheDir;
+        }
         void Awake()
         {
             singleton = this;
@@ -51,6 +77,7 @@ namespace var_browser
             harmony.PatchAll(typeof(AtomHook));
             harmony.PatchAll(typeof(HubResourcePackageHook));
             harmony.PatchAll(typeof(SuperControllerHook));
+            harmony.PatchAll(typeof(PatchAssetLoader));
             //harmony.PatchAll(typeof(PatchHairLODSettings));
 
         }
@@ -60,6 +87,7 @@ namespace var_browser
             var go = new GameObject("var_browser_messager");
             var messager = go.AddComponent<Messager>();
             messager.target = this.gameObject;
+            go.AddComponent<CustomAssetLoader>();
 
             SceneManager.sceneLoaded -= OnSceneLoaded;
             SceneManager.sceneLoaded += OnSceneLoaded;
