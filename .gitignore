@@ -1,0 +1,5 @@
+/obj/
+/bin/
+var_browser.csproj
+.vs/var_browser/v16/.suo
+var_browser.csproj.user

@@ -1076,9 +1076,11 @@ namespace var_browser
 			this.inGame = inGame;
             if (this.inGame)
             {
-                creatorPopup.gameObject.SetActive(false);
+				//不隐藏作者下拉框
+				creatorPopup.gameObject.SetActive(true);
 				//把弹出的popup隐藏掉
 				creatorPopup.GetComponent<UIPopup>().visible = false;
+				creatorPopup.label = "Folder";//改名文件夹
 			}
             else
             {
@@ -2468,8 +2470,43 @@ namespace var_browser
 				creatorFilterChooser.valNoCallback=choice;
 				_creatorFilter = choice;
 			}
+			//本地资源  左边作者改成 文件夹下拉框
+			else
+			{
+				//调整路径
+				if(lgFileBrowser != null)
+				{
+					string lastCreator = null;
+					if(_creatorFilter != "All")
+					{
+						lastCreator = _creatorFilter;
+					}
+					List<string> ret = new List<string>();
+					string choice = "All";
+					string[] ds = MVR.FileManagementSecure.FileManagerSecure.GetDirectories(lgFileBrowser);
+					if(ds.Length > 0)
+					{
+						foreach(string item in ds)
+						{
+							string creator = item;
+							ret.Add(item);
+							if(creator == lastCreator)
+							{
+								choice = item;
+							}
+						}
+					}
 
-            cachedFiles = list;
+					ret.Insert(0, "All");
+					creatorFilterChooser.choices = ret;
+					//这里会调用回调函数，会有问题。只设置显示
+					creatorFilterChooser.valNoCallback = choice;
+					_creatorFilter = choice;
+				}
+
+			}
+
+			cachedFiles = list;
 			lastCacheFileFormat = fileFormat;
 			lastCacheFileRemovePrefix = fileRemovePrefix;
 			lastCacheUseFlatten = useFlatten;
@@ -3012,7 +3049,34 @@ namespace var_browser
 		{
 			//LogUtil.Log("SyncCreatorFilter "+s);
 			_creatorFilter = s;
-			ResetDisplayedPage();
+
+			//下拉框回调判断 文件夹和作者
+			if(inGame)
+			{
+				SyncFileBrowserFilter();
+			}
+			else
+			{
+				ResetDisplayedPage();
+			}
+		}
+		public string lgFileBrowser = null;//liu修改 本地的路径
+
+		//下拉框回调判断 文件夹和作者
+		protected void SyncFileBrowserFilter()
+		{
+			SaveDirectoryScrollPos();
+			_page = 1;
+			_totalPages = 1;
+			if(_creatorFilter == "All")
+			{
+				defaultPath = lgFileBrowser;//原来的跟路径
+			}
+			else
+			{
+				defaultPath = _creatorFilter;
+			}
+			ShowInternal(true);//显示内部信息
 		}
 	}
 
