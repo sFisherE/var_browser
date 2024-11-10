@@ -1086,6 +1086,7 @@ namespace var_browser
             {
 				creatorPopup.gameObject.SetActive(true);
                 creatorPopup.GetComponent<UIPopup>().visible = false;
+				creatorPopup.label = "Creator";
 			}
 			ShowInternal(changeDirectory);
         }
@@ -2464,8 +2465,13 @@ namespace var_browser
 						}
 					}
 				}
-                ret.Insert(0, "All");
-                creatorFilterChooser.choices = ret;
+				ret.Insert(0, "All");
+				creatorFilterChooser.choices = ret;
+				if(lgFileBrowser != null)
+				{
+					choice = "All";
+					lgFileBrowser = null;
+				}
 				//这里会调用回调函数，会有问题。只设置显示
 				creatorFilterChooser.valNoCallback=choice;
 				_creatorFilter = choice;
