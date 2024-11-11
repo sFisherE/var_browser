@@ -2398,14 +2398,21 @@ namespace var_browser
 
 			//这里是初始化这个页面所有的作者信息
 			//过滤创作者
-			if (!inGame)
-            {
+			if(!inGame)
+			{
 				string lastCreator = null;
-                if (_creatorFilter != "All")
-                {
-					lastCreator = _creatorFilter.Substring(0, _creatorFilter.IndexOf('('));
+				if(lgFileBrowser != null)
+				{
+					lgFileBrowser = null;
 				}
-                Dictionary<string, int> dic = new Dictionary<string, int>();
+				else
+				{
+					if(_creatorFilter != "All")
+					{
+						lastCreator = _creatorFilter.Substring(0, _creatorFilter.IndexOf('('));
+					}
+				}
+				Dictionary<string, int> dic = new Dictionary<string, int>();
                 List<string> ret = new List<string>();
 				bool keepCreator = false;
                 foreach (var item in list)
@@ -2467,13 +2474,9 @@ namespace var_browser
 				}
 				ret.Insert(0, "All");
 				creatorFilterChooser.choices = ret;
-				if(lgFileBrowser != null)
-				{
-					choice = "All";
-					lgFileBrowser = null;
-				}
+	
 				//这里会调用回调函数，会有问题。只设置显示
-				creatorFilterChooser.valNoCallback=choice;
+				creatorFilterChooser.valNoCallback = choice;
 				_creatorFilter = choice;
 			}
 			//本地资源  左边作者改成 文件夹下拉框
@@ -2494,11 +2497,11 @@ namespace var_browser
 					{
 						foreach(string item in ds)
 						{
-							string creator = item;
-							ret.Add(item);
+							string creator = "/"+MVR.FileManagementSecure.FileManagerSecure.GetFileName(item);//取目录最后一个  GetDirectoryName
+							ret.Add(creator);
 							if(creator == lastCreator)
 							{
-								choice = item;
+								choice = creator;
 							}
 						}
 					}
@@ -2888,7 +2891,7 @@ namespace var_browser
             {
 				//这个放最后，因为会弹出popup窗口，否则会被挡住
 				//创作者过滤
-				var createrContainter = CreateUIContainer(-420, 0, 420, 120);
+				var createrContainter = CreateUIContainer(-420, 0, 420, 800);
 				var list = new List<string>();
 				list.Add("All");
 				List<string> choicesList4 = list;
@@ -2896,7 +2899,7 @@ namespace var_browser
 				creatorFilterChooser.isStorable = false;
 				creatorFilterChooser.isRestorable = false;
 				creatorPopup = CreateFilterablePopup(createrContainter, creatorFilterChooser);//高度120
-
+				creatorPopup.popupPanelHeight = 800;
 			}
 
 		}
@@ -3080,7 +3083,7 @@ namespace var_browser
 			}
 			else
 			{
-				defaultPath = _creatorFilter;
+				defaultPath = lgFileBrowser + _creatorFilter;
 			}
 			ShowInternal(true);//显示内部信息
 		}
