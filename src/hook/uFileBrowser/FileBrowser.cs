@@ -1081,9 +1081,22 @@ namespace var_browser
 				//把弹出的popup隐藏掉
 				creatorPopup.GetComponent<UIPopup>().visible = false;
 				creatorPopup.label = "Folder";//改名文件夹
+
+				defaultPath = lgFileBrowser + "/" + GetRegularNumbers(_creatorFilter);
+				if(!Directory.Exists(defaultPath))
+				{
+					defaultPath = lgFileBrowser;
+					_creatorFilter = "All";
+				}
 			}
-            else
-            {
+			else
+			{
+				//不是本地的 恢复为空
+				if(lgFileBrowser != null)
+				{
+					lgFileBrowser = null;
+
+				}
 				creatorPopup.gameObject.SetActive(true);
                 creatorPopup.GetComponent<UIPopup>().visible = false;
 				creatorPopup.label = "Creator";
@@ -2488,7 +2501,7 @@ namespace var_browser
 					string lastCreator = null;
 					if(_creatorFilter != "All")
 					{
-						lastCreator = _creatorFilter.Substring(0, _creatorFilter.IndexOf('('));
+						lastCreator = GetRegularNumbers(_creatorFilter);
 					}
 					List<string> ret = new List<string>();
 					string choice = "All";
@@ -2498,9 +2511,10 @@ namespace var_browser
 						foreach(string item in ds)
 						{
 							string creator = MVR.FileManagementSecure.FileManagerSecure.GetFileName(item);//取目录最后一个  GetDirectoryName
+							string creator2 = creator;
 							int fileCount = Directory.GetFiles(item, "*.json", SearchOption.AllDirectories).Length;//获取文件夹内（包括子文件夹）的文件数量
 							creator += "(" + fileCount + ")";
-							if(creator == lastCreator)
+							if(creator2 == lastCreator)
 							{
 								choice = creator;
 							}
@@ -2530,7 +2544,21 @@ namespace var_browser
 			cacheDirty = false;
 		}
 
-		private void UpdateFileList()
+		//处理文件夹带数字的名称
+		private string GetRegularNumbers(string input)
+		{
+			string pattern = @"\((?<number>\d+)\)";
+			MatchCollection matches = Regex.Matches(input, pattern);
+			string name = "";
+				foreach(Match match in matches)
+				{
+					name = match.Groups["number"].Value;
+				//SuperController.LogMessage(match.Groups["number"].Value);
+				}
+			return input.Replace("(" + name + ")", "");
+		}
+
+	private void UpdateFileList()
 		{
 			//Debug.Log("UpdateFileList");
             if (!cacheDirty)
@@ -3065,7 +3093,7 @@ namespace var_browser
 			//下拉框回调判断 文件夹和作者
 			if(inGame)
 			{
-				SyncFileBrowserFilter();
+				FolderResetDisplayedPage();
 			}
 			else
 			{
@@ -3075,18 +3103,16 @@ namespace var_browser
 		public string lgFileBrowser = null;//liu修改 本地的路径
 
 		//下拉框回调判断 文件夹和作者
-		protected void SyncFileBrowserFilter()
+		protected void FolderResetDisplayedPage()
 		{
 			SaveDirectoryScrollPos();
 			_page = 1;
 			_totalPages = 1;
-			if(_creatorFilter == "All")
+			defaultPath = lgFileBrowser + "/" + GetRegularNumbers(_creatorFilter);
+			if(!Directory.Exists(defaultPath))
 			{
-				defaultPath = lgFileBrowser;//原来的跟路径
-			}
-			else
-			{
-				defaultPath = lgFileBrowser + "/" + _creatorFilter.Substring(0, _creatorFilter.IndexOf('('));
+				defaultPath = lgFileBrowser;
+				_creatorFilter = "All";
 			}
 			ShowInternal(true);//显示内部信息
 		}

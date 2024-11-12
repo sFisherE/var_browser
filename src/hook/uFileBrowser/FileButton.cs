@@ -410,8 +410,12 @@ namespace var_browser
                 renameButton.onClick.AddListener(InstallInBackground);
 
                 hiddenToggle.gameObject.SetActive(false);
+				//本地场景收藏功能
+                favoriteToggle.gameObject.SetActive(true);
+                favoriteToggle.onValueChanged.RemoveAllListeners();
+                favoriteToggle.isOn = favorite;
+                favoriteToggle.onValueChanged.AddListener(OnFavoriteChange);
 
-                favoriteToggle.gameObject.SetActive(false);
 
                 useFileAsTemplateToggle.gameObject.SetActive(false);
             }

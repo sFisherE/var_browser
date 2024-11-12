@@ -165,9 +165,10 @@ namespace var_browser
                 if (CustomSceneKey.TestKeyDown())
                 {
                     //自定义的不需要安装
-                    m_FileBrowser.onlyInstalled = false;
-                    ShowFileBrowser("Custom Scene", "json", "Saves/scene", true);
-                }
+					m_FileBrowser.onlyInstalled = false;
+					m_FileBrowser.lgFileBrowser = "Saves/scene";//文件夹筛选
+					ShowFileBrowser("Custom Scene", "json", m_FileBrowser.lgFileBrowser, true);
+				}
                 if (CategorySceneKey.TestKeyDown())
                 {
                     ShowFileBrowser("Category Scene", "json", "Saves/scene");
@@ -391,7 +392,8 @@ namespace var_browser
                 {
                     //自定义的不需要安装
                     m_FileBrowser.onlyInstalled = false;
-                    ShowFileBrowser("Custom Scene", "json", "Saves/scene", true);
+					m_FileBrowser.lgFileBrowser = "Saves/scene出";//迷你版 文件夹筛选
+					ShowFileBrowser("Custom Scene", "json", m_FileBrowser.lgFileBrowser, true);
                 }
                 if (GUILayout.Button("2.Scene"))
                 {
