@@ -2488,7 +2488,7 @@ namespace var_browser
 					string lastCreator = null;
 					if(_creatorFilter != "All")
 					{
-						lastCreator = _creatorFilter;
+						lastCreator = _creatorFilter.Substring(0, _creatorFilter.IndexOf('('));
 					}
 					List<string> ret = new List<string>();
 					string choice = "All";
@@ -2497,12 +2497,14 @@ namespace var_browser
 					{
 						foreach(string item in ds)
 						{
-							string creator = "/"+MVR.FileManagementSecure.FileManagerSecure.GetFileName(item);//取目录最后一个  GetDirectoryName
-							ret.Add(creator);
+							string creator = MVR.FileManagementSecure.FileManagerSecure.GetFileName(item);//取目录最后一个  GetDirectoryName
+							int fileCount = Directory.GetFiles(item, "*.json", SearchOption.AllDirectories).Length;//获取文件夹内（包括子文件夹）的文件数量
+							creator += "(" + fileCount + ")";
 							if(creator == lastCreator)
 							{
 								choice = creator;
 							}
+							ret.Add(creator);
 						}
 					}
 
@@ -2891,15 +2893,16 @@ namespace var_browser
             {
 				//这个放最后，因为会弹出popup窗口，否则会被挡住
 				//创作者过滤
-				var createrContainter = CreateUIContainer(-420, 0, 420, 800);
+				var createrContainter = CreateUIContainer(-420, 0, 420, 120);
 				var list = new List<string>();
 				list.Add("All");
 				List<string> choicesList4 = list;
 				creatorFilterChooser = new JSONStorableStringChooser("creator", choicesList4, _creatorFilter, "Creator", SyncCreatorFilter);
 				creatorFilterChooser.isStorable = false;
 				creatorFilterChooser.isRestorable = false;
-				creatorPopup = CreateFilterablePopup(createrContainter, creatorFilterChooser);//高度120
-				creatorPopup.popupPanelHeight = 800;
+				//creatorPopup = CreateFilterablePopup(createrContainter, creatorFilterChooser);//高度120  有搜索的下拉框
+				creatorPopup = CreateScrollablePopup(createrContainter, creatorFilterChooser);//高度120 没有搜索的 可以滑块选择的
+				creatorPopup.popupPanelHeight = 1600;
 			}
 
 		}
@@ -3083,7 +3086,7 @@ namespace var_browser
 			}
 			else
 			{
-				defaultPath = lgFileBrowser + _creatorFilter;
+				defaultPath = lgFileBrowser + "/" + _creatorFilter.Substring(0, _creatorFilter.IndexOf('('));
 			}
 			ShowInternal(true);//显示内部信息
 		}
