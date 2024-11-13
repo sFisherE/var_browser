@@ -1076,14 +1076,30 @@ namespace var_browser
 			this.inGame = inGame;
             if (this.inGame)
             {
-                creatorPopup.gameObject.SetActive(false);
+				//不隐藏作者下拉框
+				creatorPopup.gameObject.SetActive(true);
 				//把弹出的popup隐藏掉
 				creatorPopup.GetComponent<UIPopup>().visible = false;
+				creatorPopup.label = "Folder";//改名文件夹
+
+				defaultPath = lgFileBrowser + "/" + GetRegularNumbers(_creatorFilter);
+				if(!Directory.Exists(defaultPath))
+				{
+					defaultPath = lgFileBrowser;
+					_creatorFilter = "All";
+				}
 			}
-            else
-            {
+			else
+			{
+				//不是本地的 恢复为空
+				if(lgFileBrowser != null)
+				{
+					lgFileBrowser = null;
+
+				}
 				creatorPopup.gameObject.SetActive(true);
                 creatorPopup.GetComponent<UIPopup>().visible = false;
+				creatorPopup.label = "Creator";
 			}
 			ShowInternal(changeDirectory);
         }
@@ -2395,14 +2411,21 @@ namespace var_browser
 
 			//这里是初始化这个页面所有的作者信息
 			//过滤创作者
-			if (!inGame)
-            {
+			if(!inGame)
+			{
 				string lastCreator = null;
-                if (_creatorFilter != "All")
-                {
-					lastCreator = _creatorFilter.Substring(0, _creatorFilter.IndexOf('('));
+				if(lgFileBrowser != null)
+				{
+					lgFileBrowser = null;
 				}
-                Dictionary<string, int> dic = new Dictionary<string, int>();
+				else
+				{
+					if(_creatorFilter != "All")
+					{
+						lastCreator = _creatorFilter.Substring(0, _creatorFilter.IndexOf('('));
+					}
+				}
+				Dictionary<string, int> dic = new Dictionary<string, int>();
                 List<string> ret = new List<string>();
 				bool keepCreator = false;
                 foreach (var item in list)
@@ -2462,14 +2485,53 @@ namespace var_browser
 						}
 					}
 				}
-                ret.Insert(0, "All");
-                creatorFilterChooser.choices = ret;
+				ret.Insert(0, "All");
+				creatorFilterChooser.choices = ret;
+	
 				//这里会调用回调函数，会有问题。只设置显示
-				creatorFilterChooser.valNoCallback=choice;
+				creatorFilterChooser.valNoCallback = choice;
 				_creatorFilter = choice;
 			}
+			//本地资源  左边作者改成 文件夹下拉框
+			else
+			{
+				//调整路径
+				if(lgFileBrowser != null)
+				{
+					string lastCreator = null;
+					if(_creatorFilter != "All")
+					{
+						lastCreator = GetRegularNumbers(_creatorFilter);
+					}
+					List<string> ret = new List<string>();
+					string choice = "All";
+					string[] ds = MVR.FileManagementSecure.FileManagerSecure.GetDirectories(lgFileBrowser);
+					if(ds.Length > 0)
+					{
+						foreach(string item in ds)
+						{
+							string creator = MVR.FileManagementSecure.FileManagerSecure.GetFileName(item);//取目录最后一个  GetDirectoryName
+							string creator2 = creator;
+							int fileCount = Directory.GetFiles(item, "*.json", SearchOption.AllDirectories).Length;//获取文件夹内（包括子文件夹）的文件数量
+							creator += "(" + fileCount + ")";
+							if(creator2 == lastCreator)
+							{
+								choice = creator;
+							}
+							ret.Add(creator);
+						}
+					}
 
-            cachedFiles = list;
+					ret.Insert(0, "All");
+					creatorFilterChooser.choices = ret;
+					//这里会调用回调函数，会有问题。只设置显示
+					creatorFilterChooser.valNoCallback = choice;
+					_creatorFilter = choice;
+				}
+
+			}
+
+			cachedFiles = list;
 			lastCacheFileFormat = fileFormat;
 			lastCacheFileRemovePrefix = fileRemovePrefix;
 			lastCacheUseFlatten = useFlatten;
@@ -2482,7 +2544,21 @@ namespace var_browser
 			cacheDirty = false;
 		}
 
-		private void UpdateFileList()
+		//处理文件夹带数字的名称
+		private string GetRegularNumbers(string input)
+		{
+			string pattern = @"\((?<number>\d+)\)";
+			MatchCollection matches = Regex.Matches(input, pattern);
+			string name = "";
+				foreach(Match match in matches)
+				{
+					name = match.Groups["number"].Value;
+				//SuperController.LogMessage(match.Groups["number"].Value);
+				}
+			return input.Replace("(" + name + ")", "");
+		}
+
+	private void UpdateFileList()
 		{
 			//Debug.Log("UpdateFileList");
             if (!cacheDirty)
@@ -2852,8 +2928,9 @@ namespace var_browser
 				creatorFilterChooser = new JSONStorableStringChooser("creator", choicesList4, _creatorFilter, "Creator", SyncCreatorFilter);
 				creatorFilterChooser.isStorable = false;
 				creatorFilterChooser.isRestorable = false;
-				creatorPopup = CreateFilterablePopup(createrContainter, creatorFilterChooser);//高度120
-
+				//creatorPopup = CreateFilterablePopup(createrContainter, creatorFilterChooser);//高度120  有搜索的下拉框
+				creatorPopup = CreateScrollablePopup(createrContainter, creatorFilterChooser);//高度120 没有搜索的 可以滑块选择的
+				creatorPopup.popupPanelHeight = 1600;
 			}
 
 		}
@@ -3012,7 +3089,32 @@ namespace var_browser
 		{
 			//LogUtil.Log("SyncCreatorFilter "+s);
 			_creatorFilter = s;
-			ResetDisplayedPage();
+
+			//下拉框回调判断 文件夹和作者
+			if(inGame)
+			{
+				FolderResetDisplayedPage();
+			}
+			else
+			{
+				ResetDisplayedPage();
+			}
+		}
+		public string lgFileBrowser = null;//liu修改 本地的路径
+
+		//下拉框回调判断 文件夹和作者
+		protected void FolderResetDisplayedPage()
+		{
+			SaveDirectoryScrollPos();
+			_page = 1;
+			_totalPages = 1;
+			defaultPath = lgFileBrowser + "/" + GetRegularNumbers(_creatorFilter);
+			if(!Directory.Exists(defaultPath))
+			{
+				defaultPath = lgFileBrowser;
+				_creatorFilter = "All";
+			}
+			ShowInternal(true);//显示内部信息
 		}
 	}
 

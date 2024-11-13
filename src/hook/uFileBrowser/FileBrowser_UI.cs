@@ -117,6 +117,46 @@ namespace var_browser
 			}
 			return null;
 		}
+		//没有搜索的 可以滑块选择的
+		 UIDynamicPopup CreateScrollablePopup(RectTransform parent, JSONStorableStringChooser jsc, bool rightSide = false)
+		{
+			var manager = SuperController.singleton.transform.Find("ScenePluginManager").GetComponent<MVRPluginManager>();
+			//UIDynamicPopup uidynamicPopup = null;
+			//if(manager != null && manager.configurableScrollablePopupPrefab != null && jsc.popup == null)
+			if(manager != null && manager.configurableScrollablePopupPrefab != null)
+			{
+				RectTransform transform = UnityEngine.Object.Instantiate(manager.configurableScrollablePopupPrefab, parent) as RectTransform;
+				transform.gameObject.SetActive(true);
+				var uIDynamicPopup = transform.GetComponent<UIDynamicPopup>();
+				if(uIDynamicPopup != null)
+				{
+					uIDynamicPopup.label = jsc.name;
+					jsc.popup = uIDynamicPopup.popup;
+				}
+				var popup = transform.GetComponent<UIPopup>();
+				if(popup != null)
+				{
+					FieldInfo fieldInfo = typeof(UIPopup).GetField("maxNumber", BindingFlags.NonPublic | BindingFlags.Instance);
+					fieldInfo.SetValue(popup, 999);
+				}
+
+				/*
+				Transform transform = this.CreateUIElement(manager.configurableScrollablePopupPrefab.transform, rightSide);
+				if(transform != null)
+				{
+					uidynamicPopup = transform.GetComponent<UIDynamicPopup>();
+					if(uidynamicPopup != null)
+					{
+						this.popupToJSONStorableStringChooser.Add(uidynamicPopup, jsc);
+						uidynamicPopup.label = jsc.name;
+						jsc.popup = uidynamicPopup.popup;
+					}
+				}
+				*/
+				return uIDynamicPopup;
+			}
+			return null;
+		}
 
 		UIDynamicToggle CreateToggle(RectTransform parent, JSONStorableBool jsb)
         {

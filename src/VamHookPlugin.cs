@@ -165,9 +165,10 @@ namespace var_browser
                 if (CustomSceneKey.TestKeyDown())
                 {
                     //自定义的不需要安装
-                    m_FileBrowser.onlyInstalled = false;
-                    ShowFileBrowser("Custom Scene", "json", "Saves/scene", true);
-                }
+					m_FileBrowser.onlyInstalled = false;
+					m_FileBrowser.lgFileBrowser = "Saves/scene";//文件夹筛选
+					ShowFileBrowser("Custom Scene", "json", m_FileBrowser.lgFileBrowser, true);
+				}
                 if (CategorySceneKey.TestKeyDown())
                 {
                     ShowFileBrowser("Category Scene", "json", "Saves/scene");
@@ -352,7 +353,7 @@ namespace var_browser
         }
         private void DragWnd(int windowsid)
         {
-            GUI.DragWindow(new Rect(0, 0, m_Rect.width, 20));
+            GUI.DragWindow(new Rect(0, 0, (m_Rect.width + (m_Rect.width * 0.1f)), 20));//宽度加宽点，避免数字落起来
 
             GUILayout.BeginHorizontal();
             GUILayout.Label(string.Format("<color=#00FF00><b>{0}</b></color> {1}", FileManager.s_InstalledCount, prograssText));
@@ -391,7 +392,8 @@ namespace var_browser
                 {
                     //自定义的不需要安装
                     m_FileBrowser.onlyInstalled = false;
-                    ShowFileBrowser("Custom Scene", "json", "Saves/scene", true);
+					m_FileBrowser.lgFileBrowser = "Saves/scene出";//迷你版 文件夹筛选
+					ShowFileBrowser("Custom Scene", "json", m_FileBrowser.lgFileBrowser, true);
                 }
                 if (GUILayout.Button("2.Scene"))
                 {
@@ -550,6 +552,9 @@ namespace var_browser
 
             //刷新一下favorite和autoinstall的状态
             MessageKit.post(MessageDef.FileManagerRefresh);
+
+            //隐藏 vam欢迎ui
+            SuperController.singleton.topWorldUI.gameObject.SetActive(false);
         }
         void OnGUI()
         {

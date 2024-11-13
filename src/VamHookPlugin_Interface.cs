@@ -75,19 +75,22 @@ namespace var_browser
         {
             //自定义的不需要安装
             m_FileBrowser.onlyInstalled = false;
-            ShowFileBrowser("Custom Scene", "json", "Saves/scene", true);
+            m_FileBrowser.lgFileBrowser = "Saves/scene";//本地左边文件夹搜索用
+            ShowFileBrowser("Custom Scene", "json", m_FileBrowser.lgFileBrowser, true);
         }
         public void OpenCustomSavedPerson()
         {
             //自定义的不需要安装
             m_FileBrowser.onlyInstalled = false;
-            ShowFileBrowser("Custom Saved Person", "json", "Saves/Person", true);
+            m_FileBrowser.lgFileBrowser = "Saves/Person";//本地左边文件夹搜索用
+            ShowFileBrowser("Custom Saved Person", "json", m_FileBrowser.lgFileBrowser, true);
         }
         public void OpenPersonPreset()
         {
             //自定义的不需要安装
             m_FileBrowser.onlyInstalled = false;
-            ShowFileBrowser("Custom Person Preset", "vap", "Custom/Atom/Person", true, false);
+            m_FileBrowser.lgFileBrowser = "Custom/Atom/Person";//本地左边文件夹搜索用
+            ShowFileBrowser("Custom Person Preset", "vap", m_FileBrowser.lgFileBrowser, true, false);
         }
         public void OpenCategoryScene()
         {
